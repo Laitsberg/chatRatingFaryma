@@ -2,23 +2,29 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rating Widget</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/comfy.js@latest/dist/comfy.min.js"></script>
-    <script src="script.js"></script>
 </head>
 <body>
-    <div id="info" class="container" style="opacity: 0;">
-        <h1>Голосование в чате!</h1>
-        <p>Напишите оценку из списка категорий</p> <!-- Изменено под вашу систему -->
-        <p>Проголосовавших: <span id="counter-info">0</span></p>
-        <div id="timer">00:00</div>
+    <div id="info">
+        Голосование в чате!<br>
+        Напишите одну из оценок:<br>
+        Кринж-контент, Кринж-контент+, Ну такое --, Ну такое -, Ну такое, Ну такое +, Ну такое ++,<br>
+        Нормас --, Нормас -, Нормас, Нормас +, Нормас ++,<br>
+        Хорошечно --, Хорошечно -, Хорошечно, Хорошечно +, Хорошечно ++,<br>
+        Атлична --, Атлична -, Атлична, Атлична +, Атлична ++,<br>
+        Гениально --, Гениально -, Гениально
+        <span>Проголосовавших: <span id="counter-info">0</span></span>
+        <div id="timer">0:25</div>
     </div>
-    <div id="result" class="container" style="opacity: 0;">
-        <h1>Голосование окончено!</h1>
-        <p>Проголосовавших: <span id="counter-result">0</span></p>
-        <p id="score">Итог: 0</p>
-        <ul id="votes-list"></ul> <!-- Новый список для индивидуальных голосов -->
+    <div id="result">
+        Голосование окончено!
+        <span>Проголосовавших: <span id="counter-result">0</span></span>
+        <div id="score">0</div>
+        <ul id="votes-list"></ul> <!-- Список голосов -->
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/comfy.js@latest/dist/comfy.min.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
