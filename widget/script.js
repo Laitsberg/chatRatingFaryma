@@ -4,7 +4,7 @@ const timerEl = document.getElementById("timer");
 const scoreEl = document.getElementById("score");
 const counterInfoEl = document.getElementById("counter-info");
 const counterResultEl = document.getElementById("counter-result");
-const votesListEl = document.getElementById("votes-list"); // Новый элемент для списка
+const votesListEl = document.getElementById("votes-list");
 
 const params = (new URL(document.location)).searchParams;
 const channel = params.get("channel") || null;
@@ -13,11 +13,11 @@ const defaultTime = parseInt(params.get("time")) || 60;
 let timer = null;
 let state = 0; // 0 - ожидание, 1 - голосование, 2 - результаты
 let timerValue = 0;
-let users = []; // Для предотвращения дубликатов
-let votes = []; // Новый: [{user: 'name', rating: 'Категория', value: number}]
-let score = 0.0; // Сумма значений
+let users = [];
+let votes = []; // {user, rating, value}
+let score = 0.0;
 
-// Ваши категории с присвоенными значениями (1-25, от худшего к лучшему)
+// Категории с значениями
 const categories = {
   "кринж-контент": 1,
   "кринж-контент+": 2,
@@ -46,17 +46,20 @@ const categories = {
   "гениально": 25
 };
 
+// Инвертированный map для поиска категории по значению
+const valueToCategory = Object.fromEntries(Object.entries(categories).map(([k, v]) => [v, k.charAt(0).toUpperCase() + k.slice(1)]));
+
 function messageHandler(user, message) {
   if (state !== 1) return;
   if (users.includes(user)) return;
 
-  message = message.trim().toLowerCase().replace(/[\uD800-\uDFFF]/gi, ''); // Очистка
+  message = message.trim().toLowerCase().replace(/[\uD800-\uDFFF]/gi, '');
 
-  // Проверяем, есть ли точное совпадение с ключом
   if (categories.hasOwnProperty(message)) {
     const value = categories[message];
+    const rating = message.charAt(0).toUpperCase() + message.slice(1);
     score += value;
-    votes.push({ user, rating: message.charAt(0).toUpperCase() + message.slice(1), value }); // Капитализируем для display
+    votes.push({ user, rating, value });
     users.push(user);
     counterInfoEl.innerText = users.length;
   }
@@ -68,7 +71,7 @@ function init() {
   };
 
   ComfyJS.onCommand = (user, command, message, flags, extra) => {
-    if (flags.broadcaster || flags.mod || user == "declider") {
+    if (flags.broadcaster || flags.mod || user == "laitsberg") { // Замените на свой ник, если нужно
       if (command === "оценка") {
         if (state === 0) {
           let time = message.split(" ")[0];
@@ -101,8 +104,8 @@ function start(time) {
   timer = setInterval(onTimer, 1000);
   infoEl.style.opacity = 1;
   state = 1;
-  votes = []; // Очистка
   users = [];
+  votes = [];
   score = 0.0;
   timerToTime();
 }
@@ -110,30 +113,34 @@ function start(time) {
 function finish() {
   timer && (typeof timer === 'number' ? clearTimeout(timer) : clearInterval(timer));
 
-  let result;
-  if (votes.length) {
-    result = (score / votes.length).toFixed(2);
-    scoreEl.textContent = `Итог (среднее): ${result} / 25`;
+  let resultText;
+  if (users.length) {
+    const average = score / users.length;
+    const rounded = Math.round(average); // Округляем до ближайшего целого
+    const category = valueToCategory[rounded] || "Неизвестно"; // Ближайшая категория
 
-    // Отображение списка голосов
-    votesListEl.innerHTML = ""; // Очистка
+    resultText = `Итог: ${category}`;
+
+    // Топ категории
+    const counts = {};
+    votes.forEach(v => counts[v.rating] = (counts[v.rating] || 0) + 1);
+    const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    if (top.length) {
+      resultText += `<br>Топ: ${top.map(([cat, cnt]) => `${cat} (${cnt})`).join(", ")}`;
+    }
+
+    // Список голосов
+    votesListEl.innerHTML = "";
     votes.forEach(vote => {
       const li = document.createElement("li");
       li.textContent = `${vote.user}: ${vote.rating}`;
       votesListEl.appendChild(li);
     });
-
-    // Опционально: топ категории (counts)
-    const counts = {};
-    votes.forEach(v => counts[v.rating] = (counts[v.rating] || 0) + 1);
-    const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
-    let topText = "\nТоп категории: " + top.map(([cat, cnt]) => `${cat} (${cnt})`).join(", ");
-    scoreEl.textContent += topText;
   } else {
-    scoreEl.textContent = `Нет оценок`;
+    resultText = `Нет оценок`;
   }
-
-  counterResultEl.textContent = votes.length;
+  scoreEl.innerHTML = resultText;
+  counterResultEl.textContent = users.length;
 
   infoEl.style.opacity = 0;
   resultEl.style.opacity = 1;
