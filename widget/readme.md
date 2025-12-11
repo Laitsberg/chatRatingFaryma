@@ -4,7 +4,7 @@
 
 # Установка
 
-1. Копируете ссылку `https://declider.github.io/chatRating/widget?channel=ТвичКанал`
+1. Копируете ссылку `[https://laitsberg.github.io/chatRatingFaryma/widget/?channel=ТвичКанал]`
 2. Заменяете `ТвичКанал` на свой канал на Твиче
 3. Добавляете в OBS как источник браузера
 
