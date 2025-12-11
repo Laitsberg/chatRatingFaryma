@@ -2,66 +2,33 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Twitch Chat Rating</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/comfy.js@latest/dist/comfy.min.js"></script>
+    <script src="script.js"></script>
 </head>
 <body>
-
-    <label for="timer">Таймер (в минутах)</label>
-    <input type="number" name="timer" id="timer" placeholder="0" value="0" min="0" max="10">
-    &nbsp;&nbsp;&nbsp;
-    <label for="mode" onmouseover="showModeInfo()" onmouseleave="hideModeInfo()">Режим</label>
-    <select name="mode" id="mode" onmouseover="showModeInfo()" onmouseleave="hideModeInfo()">
-        <option value="only">Единственное число</option>
-        <option value="first">Первое число</option>
-    </select>
-    &nbsp;&nbsp;&nbsp;
-    <button id="start-button" onclick="start()" disabled>СТАРТ</button>
-
-    <br>
-    <div id="channel">
-        НЕ УКАЗАН TWITCH КАНАЛ (в текущей ссылке добавить ?channel=СЮДА)
-
-        
-    </div>
-    <div id="main">
-        <p id="info">
-            <text id="info-text">
-                Голосование в чате!<br>
-                Напишите оценку от 1 до 10<br>
-            </text>
-            Проголосовавших: <span id="counter">0</span>
-        </p>
-        
-        <div id="score"></div>
-        
-    </div>
-
-    <div id="mode-info">
-        (можете это не менять и не забивать голову)
-        <hr>
-        <div>
-            Единственное число - считаются только сообщения состоящие исключительно из одного числа,
-            но сообщения длиннее одного числа будут проигнорированы.
+    <div class="container">
+        <div id="channel">
+            <p>Добавьте twitch канал в ссылку:</p>
+            <p>?channel=declider</p>
         </div>
-        <img src="onlyMode.png">
-        <hr>
-        <div>
-            Первое число - считаются числа с которых начинаются сообщения,
-            но могут засчитываться лишние сообщения не относящиеся к оценке.
+        <div id="main" style="visibility: hidden;">
+            <div id="info-text">Голосование в чате!<br>Напишите одну из оценок:<br>Кринж-контент, Кринж-контент+, Ну такое --, Ну такое -, Ну такое, Ну такое +, Ну такое ++, Нормас --, Нормас -, Нормас, Нормас +, Нормас ++, Хорошечно --, Хорошечно -, Хорошечно, Хорошечно +, Хорошечно ++, Атлична --, Атлична -, Атлична, Атлична +, Атлична ++, Гениально --, Гениально -, Гениально</div>
+            <p>Проголосовавших: <span id="counter">0</span></p>
+            <p id="score">0</p>
         </div>
-        <img src="firstMode.png">
+        <div class="row">
+            <label for="timer">Время (минуты):</label>
+            <input type="number" id="timer" value="1">
+        </div>
+        <!-- Убрал режим, так как теперь строки -->
+        <button id="start-button" onclick="start()" disabled>СТАРТ</button>
+        <div id="obs-widget">
+            <p>Этот виджет для OBS. Управление им должно быть у модератора или стримера.</p>
+            <p>Голоса собираются из сообщений чата состоящих только из числа. Сообщения из нескольких слов игнорируются.</p>
+            <p>Если сообщение начинается с числа, то оно будет учтено. Но это значит, что сообщения не имеющие отношения к голосованию, но начинающиеся с числа, тоже будут учтены.</p>
+        </div>
     </div>
-
-   	<a id="obs-widget" href="https://github.com/declider/chatRating/tree/main/widget"target="_blank">
-		Виджет для OBS, управляемый модераторами!
-	</a>
-
-    <script src="script.js"></script>
-    <script src="twitch.js"></script>
 </body>
 </html>
-
