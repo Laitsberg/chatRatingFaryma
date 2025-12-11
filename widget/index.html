@@ -6,25 +6,21 @@
     <title>Rating Widget</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body style="background-color: black; color: white; font-family: Arial;"> <!-- Чёрный фон для теста -->
+<body>
     <div id="info" style="opacity: 0;">
-        <h2>Голосование в чате!</h2>
-        <p>Напишите одну из оценок:</p>
-        <p>Кринж-контент, Кринж-контент+, Ну такое --, Ну такое -, Ну такое, Ну такое +, Ну такое ++,</p>
-        <p>Нормас --, Нормас -, Нормас, Нормас +, Нормас ++,</p>
-        <p>Хорошечно --, Хорошечно -, Хорошечно, Хорошечно +, Хорошечно ++,</p>
-        <p>Атлична --, Атлична -, Атлична, Атлична +, Атлична ++,</p>
-        <p>Гениально --, Гениально -, Гениально</p>
-        <p>Проголосовавших: <span id="counter-info">0</span></p>
-        <div id="timer">00:00</div>
-        <button onclick="start(30); this.style.display='none';" style="background: green; color: white;">ТЕСТ СТАРТ (30 сек)</button> <!-- Тест-кнопка -->
+        <h2>ГОЛОСОВАНИЕ АКТИВНО</h2>
+        <p>Проголосовавших: <span id="counter-info" style="color:#ffff66;">0</span></p>
+        <div id="timer">01:00</div>
+        <p style="font-size:14px; margin-top:15px;">Пишите в чат: Нормас, Атлична +, Гениально, Хорошечно ++ и т.д.</p>
     </div>
+
     <div id="result" style="opacity: 0;">
-        <h2>Голосование окончено!</h2>
-        <p>Проголосовавших: <span id="counter-result">0</span></p>
-        <div id="score"></div>
-        <ul id="votes-list" style="list-style: none; max-height: 200px; overflow-y: auto; padding: 10px; background: rgba(0,0,0,0.5);"></ul>
+        <h2>ГОЛОСОВАНИЕ ЗАКОНЧЕНО</h2>
+        <p>Проголосовало: <span id="counter-result" style="color:#ffff66;">0</span></p>
+        <div id="score" style="font-size:36px; color:#66ff99;"></div>
+        <ul id="votes-list"></ul>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/comfy.js@latest/dist/comfy.min.js"></script>
     <script src="script.js"></script>
 </body>
