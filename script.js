@@ -1,198 +1,165 @@
-const channelEl = document.getElementById("channel")
-const timerEl = document.getElementById("timer")
-const counterEl = document.getElementById("counter")
-const scoreEl = document.getElementById("score")
-const infoEl = document.getElementById("score")
-const infoTextEl = document.getElementById("info-text")
-const mainEl = document.getElementById("main")
-const btnEl = document.getElementById("start-button")
-const modeInfo = document.getElementById("mode-info")
-const modeEl = document.getElementById("mode")
+const timerInputEl = document.getElementById("timer"); // Для ввода минут
+const counterEl = document.getElementById("counter");
+const scoreEl = document.getElementById("score");
+const infoTextEl = document.getElementById("info-text");
+const mainEl = document.getElementById("main");
+const btnEl = document.getElementById("start-button");
 
-let timer = null
-let started = false
-let timerValue = 0
-let users = []
-let score = 0.0
+let timer = null;
+let started = false;
+let timerValue = 0;
+let users = [];
+let votes = []; // Для хранения {user, rating, value}
+let score = 0.0;
 
-let mode
+const params = (new URL(document.location)).searchParams;
+const channel = params.get("channel") || null;
 
-const params = (new URL(document.location)).searchParams
-const channel = params.get("channel") || null
-
-
-if ( channel ) {
-    channelEl.parentNode.removeChild(channelEl)
-    btnEl.disabled = false
+if (channel) {
+    document.getElementById("channel")?.remove(); // Удаляем предупреждение о канале
+    btnEl.disabled = false;
+    init(); // Инициализируем ComfyJS
 }
 
+// Категории с значениями
+const categories = {
+    "кринж-контент": 1,
+    "кринж-контент+": 2,
+    "ну такое --": 3,
+    "ну такое -": 4,
+    "ну такое": 5,
+    "ну такое +": 6,
+    "ну такое ++": 7,
+    "нормас --": 8,
+    "нормас -": 9,
+    "нормас": 10,
+    "нормас +": 11,
+    "нормас ++": 12,
+    "хорошечно --": 13,
+    "хорошечно -": 14,
+    "хорошечно": 15,
+    "хорошечно +": 16,
+    "хорошечно ++": 17,
+    "атлична --": 18,
+    "атлична -": 19,
+    "атлична": 20,
+    "атлична +": 21,
+    "атлична ++": 22,
+    "гениально --": 23,
+    "гениально -": 24,
+    "гениально": 25
+};
 
-function start() {
-    
-    document.querySelector("#obs-widget") && (document.querySelector("#obs-widget").style.display = "none")
-    
-    if(started) {
-        stop()
-        return
-    }
-
-    modeEl.disabled = true
-    timerEl.disabled = true
-    mainEl.style.visibility = "visible"
-    btnEl.innerText = "СТОП"
-    btnEl.style.backgroundColor = "rgb(129, 93, 93)" // хотел без этого в коде, но так лень
-
-    mode = modeEl.value
-
-    timerValue = timerEl.valueAsNumber * 60 || 0
-
-    infoTextEl.innerHTML = "Голосование в чате!<br>Напишите оценку от 1 до 10<br>"
-    started = true
-
-    if(timerValue > 0) {
-        timer = setInterval(onTimer, 1000)
-        timerToTime()
-    }
-    
+function init() {
+    ComfyJS.onChat = (user, message, flags, self, extra) => {
+        messageHandler(user, message);
+    };
+    ComfyJS.Init(channel);
 }
-
 
 function messageHandler(user, message) {
-    if(!started) {
-        return
+    if (!started) return;
+    if (users.includes(user)) return;
+
+    message = message.trim().toLowerCase().replace(/[\uD800-\uDFFF]/gi, ''); // Очистка
+
+    if (categories.hasOwnProperty(message)) {
+        const value = categories[message];
+        const rating = message.charAt(0).toUpperCase() + message.slice(1); // Для display
+        score += value;
+        votes.push({ user, rating, value });
+        users.push(user);
+        counterEl.innerText = users.length;
+
+        // Цвет по значению (от красного к зелёному)
+        let color = `hsl(${Math.floor((value / 25) * 120)}, 100%, 50%)`; // Зеленый (120) для высоких, красный (0) для низких
+        showNewScore(user, rating, color); // Показываем строку вместо числа
     }
-
-    if(users.includes(user)) {
-        return
-    }
-
-
-    let answer
-    if(mode=="only") {
-        answer = message.trim().replace(",",".")
-    } else if (mode=="first") {
-        answer = message.split(" ")[0].trim().replace(",",".")
-    }
-    
-    if(isNaN(answer)) {
-        return
-    }
-
-    
-    
-
-    answer = parseFloat(answer)
-
-    if (answer < 1 || answer > 10) {
-        return
-    }
-
-    let color
-    switch (Math.round(answer)) {
-        case 1:
-            color = "#f80000"; break
-        case 2:
-            color = "#fa3900"; break
-        case 3:
-            color = "#fb7100"; break
-        case 4:
-            color = "#fcaa00"; break
-        case 5:
-            color = "#fde300"; break
-        case 6:
-            color = "#e2ff06"; break
-        case 7:
-            color = "#aaff12"; break
-        case 8:
-            color = "#71ff1e"; break
-        case 9:
-            color = "#39ff2b"; break
-        case 10:
-            color = "#00ff37"; break
-        default:
-            color = "white"
-    }
-
-    score += answer
-    users.push(user)
-    counterEl.innerText = users.length
-    showNewScore(user, answer, color)
 }
 
+function start() {
+    document.querySelector("#obs-widget")?.remove(); // Убираем инфо для OBS
+
+    if (started) {
+        stop();
+        return;
+    }
+
+    timerInputEl.disabled = true;
+    mainEl.style.visibility = "visible";
+    btnEl.innerText = "СТОП";
+    btnEl.style.backgroundColor = "rgb(129, 93, 93)";
+
+    timerValue = (timerInputEl.valueAsNumber || 1) * 60; // Минуты в секунды
+
+    infoTextEl.innerHTML = "Голосование в чате!<br>Напишите одну из оценок:<br>Кринж-контент, Кринж-контент+, Ну такое --, Ну такое -, Ну такое, Ну такое +, Ну такое ++, Нормас --, Нормас -, Нормас, Нормас +, Нормас ++, Хорошечно --, Хорошечно -, Хорошечно, Хорошечно +, Хорошечно ++, Атлична --, Атлична -, Атлична, Атлична +, Атлична ++, Гениально --, Гениально -, Гениально";
+
+    started = true;
+
+    if (timerValue > 0) {
+        timer = setInterval(onTimer, 1000);
+        timerToTime();
+    }
+}
 
 function stop() {
-    try { clearInterval(timer) } catch {}
+    clearInterval(timer);
 
-    btnEl.innerText = "СТАРТ"
-    btnEl.style.backgroundColor = "rgb(93, 129, 93)"
-    infoTextEl.innerHTML = "Голосование окончено!<br><br>"
-    btnEl.disabled = true 
-    // Да, нужно F5 чтобы запустить голосование заново
-    // МНе лень писать пару строчек чтобы сбрасывать таймеры, списки, текста в html и чёт там ещё
+    btnEl.innerText = "СТАРТ"; // Но для перезапуска нужен рефреш, как в оригинале
+    btnEl.style.backgroundColor = "rgb(93, 129, 93)";
+    infoTextEl.innerHTML = "Голосование окончено!<br>";
+    btnEl.disabled = false; // Разрешаем перезапуск (но без полного сброса — добавьте reset() если нужно)
 
-    if(users.length > 0) {
-        let result = (score/users.length).toFixed(2)
-        let text = `Итог: ${result}`
-        scoreEl.innerText = text
+    if (users.length > 0) {
+        let average = (score / users.length).toFixed(2);
+        let text = `Итог (среднее): ${average} / 25`;
+
+        // Топ категории
+        const counts = {};
+        votes.forEach(v => counts[v.rating] = (counts[v.rating] || 0) + 1);
+        const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
+        text += `<br>Топ категории: ${top.map(([cat, cnt]) => `${cat} (${cnt})`).join(", ")}`;
+
+        scoreEl.innerHTML = text;
     } else {
-        scoreEl.innerText = "Никто не проголосовал :("
+        scoreEl.innerText = "Никто не проголосовал :(";
     }
 
-    started = false
-
+    started = false;
 }
-
 
 function onTimer() {
-    timerValue -= 1
-
-    if(timerValue > 0) {
-        timerToTime()
+    timerValue -= 1;
+    if (timerValue > 0) {
+        timerToTime();
     } else {
-        stop()
+        stop();
     }
-    
 }
-
 
 function timerToTime() {
-    let minutes = Math.floor(timerValue / 60)
-    let seconds = timerValue % 60
-
-    minutes = minutes.toString().padStart(2, "0")
-    seconds = seconds.toString().padStart(2, "0")
-
-    let text = `${minutes}:${seconds}`
-    scoreEl.innerText = text
+    let minutes = Math.floor(timerValue / 60);
+    let seconds = timerValue % 60;
+    minutes = minutes.toString().padStart(2, "0");
+    seconds = seconds.toString().padStart(2, "0");
+    scoreEl.innerText = `${minutes}:${seconds}`;
 }
 
+function showNewScore(user, rating, color) {
+    let el = document.createElement("div");
+    el.className = "new-score";
+    el.innerText = `${user} - ${rating}`;
 
-function showModeInfo() {
-    modeInfo.style.display = "block"
-}
+    let y = Math.floor(Math.random() * (window.innerHeight / 3 * 2)) + 100;
+    let x = Math.floor(Math.random() * (window.innerWidth / 3 * 2)) + 80;
 
+    el.style.top = `${y}px`;
+    el.style.left = `${x}px`;
+    el.style.color = color;
 
-function hideModeInfo() {
-    modeInfo.style.display = "none"
-}
-
-
-function showNewScore(user, answer, color) {
-    let el = document.createElement("div")
-    el.className = "new-score"
-    el.innerText = `${user} - ${answer}`
-
-    let y = Math.floor(Math.random() * (window.innerHeight / 3 * 2)) + 100
-    let x = Math.floor(Math.random() * (window.innerWidth  / 3 * 2)) + 80
-    
-    el.style.top  = `${y}px`
-    el.style.left = `${x}px`
-    el.style.color = color
-
-    
-    document.body.appendChild(el)
+    document.body.appendChild(el);
 
     setTimeout(() => {
-        document.body.removeChild(el)
-    }, 1000)
+        document.body.removeChild(el);
+    }, 1000);
 }
