@@ -8,13 +8,13 @@ body {
 }
 
 #info, #result {
-    background: rgba(0, 0, 0, 0.7);
-    border: 2px solid #ff6600; /* Оранжевая рамка */
+    background: rgba(0, 0, 0, 0.7) !important;
+    border: 2px solid #ff6600 !important; /* Оранжевая рамка */
     border-radius: 15px;
     padding: 20px;
     width: 420px;
     max-width: 95vw;
-    box-shadow: 0 0 20px rgba(255, 102, 0, 0.6); /* Оранжевая тень */
+    box-shadow: 0 0 20px rgba(255, 102, 0, 0.6) !important; /* Оранжевая тень */
     text-align: center;
     transition: opacity 0.8s ease;
 }
@@ -22,7 +22,7 @@ body {
 #info h2, #result h2 {
     margin: 0 0 15px 0;
     font-size: 28px;
-    text-shadow: 0 0 10px #ff6600; /* Оранжевая тень текста */
+    text-shadow: 0 0 10px #ff6600 !important; /* Оранжевая тень текста */
 }
 
 #info p, #result p {
@@ -34,26 +34,26 @@ body {
 #timer {
     font-size: 42px;
     font-weight: bold;
-    color: #ff6600; /* Оранжевый таймер */
-    text-shadow: 0 0 15px #ff6600;
+    color: #ff6600 !important; /* Оранжевый таймер */
+    text-shadow: 0 0 15px #ff6600 !important;
     margin: 10px 0;
 }
 
 #counter-info, #counter-result {
     font-size: 22px;
-    color: #ffa500; /* Ярко-оранжевый для счётчика */
+    color: #ffa500 !important; /* Ярко-оранжевый для счётчика */
 }
 
 #score {
     font-size: 32px;
     font-weight: bold;
-    color: #ffa500; /* Оранжевый для итога */
+    color: #ffa500 !important; /* Оранжевый для итога */
     margin: 15px 0;
-    text-shadow: 0 0 10px #ff6600;
+    text-shadow: 0 0 10px #ff6600 !important;
 }
 
 #votes-list {
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.6) !important;
     border-radius: 10px;
     padding: 10px;
     max-height: 300px;
@@ -66,6 +66,6 @@ body {
 #votes-list li {
     margin: 4px 0;
     padding: 4px 8px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.1) !important;
     border-radius: 6px;
 }
