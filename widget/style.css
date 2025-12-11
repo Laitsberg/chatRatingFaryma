@@ -69,4 +69,19 @@ body::-webkit-scrollbar, html::-webkit-scrollbar {
 
 #timer, #score {
     font-size: 2rem;
+
+}
+
+#votes-list {
+  list-style: none;
+  max-height: 200px;
+  overflow-y: auto;
+  font-size: 0.8rem;
+  padding: 10px;
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+}
+
+#votes-list li {
+  margin-bottom: 5px;
 }
