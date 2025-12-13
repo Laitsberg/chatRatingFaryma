@@ -13,7 +13,7 @@ body {
     border-radius: 15px;
     padding: 20px;
     width: 420px;
-    height: 450px; /* Фиксированная высота для обеих плашек */
+    min-height: 300px; /* Минимальная высота для стабильности, но без фиксированной */
     max-width: 95vw;
     box-shadow: 0 0 20px rgba(255, 102, 0, 0.6) !important; /* Оранжевая тень */
     text-align: center;
