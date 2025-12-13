@@ -13,12 +13,15 @@ body {
     border-radius: 15px;
     padding: 20px;
     width: 420px;
-    min-height: 300px; /* Минимальная высота для стабильности, но без фиксированной */
+    height: 483px; /* Фиксированная высота по вашему скриншоту */
     max-width: 95vw;
     box-shadow: 0 0 20px rgba(255, 102, 0, 0.6) !important; /* Оранжевая тень */
     text-align: center;
     transition: opacity 0.8s ease;
-    overflow: auto; /* Скролл, если контент не поместится */
+    overflow-y: auto; /* Скролл для всей плашки, если нужно */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; /* Контент сверху, без пустого места внизу */
 }
 
 #info h2, #result h2 {
@@ -58,11 +61,12 @@ body {
     background: rgba(0, 0, 0, 0.6) !important;
     border-radius: 10px;
     padding: 10px;
-    max-height: 250px; /* Уменьшили, чтобы поместилось в плашку */
+    max-height: 300px; /* Увеличил, чтобы поместилось больше голосов без скролла плашки */
     overflow-y: auto;
     margin-top: 15px;
     text-align: left;
     font-size: 15px;
+    flex-grow: 1; /* Список занимает остаток пространства, без пустоты */
 }
 
 #votes-list li {
