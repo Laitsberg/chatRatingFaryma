@@ -147,7 +147,7 @@ function finish() {
   resultEl.style.opacity = 1;
 
   state = 2;
-  timer = setTimeout(stop, 10000); // 10 сек на результат
+  timer = setTimeout(stop, 30000); // 10 сек на результат
 }
 
 function stop() {
@@ -182,4 +182,5 @@ window.onload = () => {
     document.body.style.backgroundColor = "black";
   }
 };
+
 
