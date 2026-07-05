@@ -199,16 +199,27 @@ body {
     white-space: nowrap;
 }
 
-/* --- Итоговая оценка --- */
+/* --- Вердикт (заголовок экрана результата) --- */
 #score {
     font-family: "Russo One", "Rubik", sans-serif;
-    font-size: 21px !important;
+    font-size: 26px !important;
     font-weight: 400;
-    color: var(--green) !important;
-    line-height: 1.3;
-    margin: 5px 0;
-    text-shadow: 0 0 16px rgba(124, 255, 155, 0.55);
+    line-height: 1.2;
+    margin: 2px 0 2px !important;
     animation: scorePop 0.6s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+#score.tier-low  { color: #ff6b5c !important; text-shadow: 0 0 16px rgba(255, 107, 92, 0.55); }
+#score.tier-mid  { color: var(--amber) !important; text-shadow: 0 0 16px rgba(255, 209, 102, 0.55); }
+#score.tier-high { color: var(--green) !important; text-shadow: 0 0 16px rgba(124, 255, 155, 0.55); }
+
+/* Мета-строка под вердиктом */
+#result-meta {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin: 0 0 4px;
+}
+#result-meta #counter-result {
+    font-size: 14px;
 }
 
 /* --- Список голосов --- */
