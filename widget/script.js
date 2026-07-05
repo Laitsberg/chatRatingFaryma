@@ -3,7 +3,6 @@ const resultEl = document.getElementById("result");
 const timerEl = document.getElementById("timer");
 const scoreEl = document.getElementById("score");
 const counterInfoEl = document.getElementById("counter-info");
-const counterResultEl = document.getElementById("counter-result");
 const votesListEl = document.getElementById("votes-list");
 const timerBarEl = document.querySelector("#timer-bar > i");
 const liveAvgEl = document.getElementById("live-avg");
@@ -187,21 +186,27 @@ function start(time) {
 function finish() {
   timer && (typeof timer === 'number' ? clearTimeout(timer) : clearInterval(timer));
 
-  let resultText;
+  const metaEl = document.getElementById("result-meta");
+  scoreEl.classList.remove("tier-low", "tier-mid", "tier-high");
+
   if (users.length) {
     const average = score / users.length;
-    const rounded = Math.round(average); // Округляем до ближайшего целого
-    const category = valueToCategory[rounded] || "Неизвестно"; // Ближайшая категория
+    const rounded = Math.min(26, Math.max(1, Math.round(average)));
+    const category = valueToCategory[rounded] || "Неизвестно";
 
-    resultText = `Итог: ${category}`;
+    // Вердикт — главный заголовок, цвет по тону оценки
+    scoreEl.textContent = category;
+    scoreEl.classList.add(rounded <= 8 ? "tier-low" : rounded <= 18 ? "tier-mid" : "tier-high");
 
-    // Топ категории
+    // Мета-строка: голоса + топ категорий
     const counts = {};
     votes.forEach(v => counts[v.rating] = (counts[v.rating] || 0) + 1);
     const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
-    if (top.length) {
-      resultText += `<br>Топ: ${top.map(([cat, cnt]) => `${cat} (${cnt})`).join(", ")}`;
+    let meta = `Голосов: <span id="counter-result">${users.length}</span>`;
+    if (top.length > 1) { // топ есть смысл показывать, только если категорий больше одной
+      meta += ` · Топ: ${top.map(([cat, cnt]) => `${cat} (${cnt})`).join(", ")}`;
     }
+    if (metaEl) metaEl.innerHTML = meta;
 
     // Список голосов
     votesListEl.innerHTML = "";
@@ -211,12 +216,12 @@ function finish() {
       votesListEl.appendChild(li);
     });
   } else {
-    resultText = `Нет оценок`;
+    scoreEl.textContent = "Нет оценок";
+    if (metaEl) metaEl.innerHTML = "";
+    votesListEl.innerHTML = "";
   }
-  scoreEl.innerHTML = resultText;
-  counterResultEl.textContent = users.length;
 
-  // Перезапуск "поп"-анимации итоговой оценки
+  // Перезапуск "поп"-анимации вердикта
   scoreEl.style.animation = "none";
   void scoreEl.offsetWidth;
   scoreEl.style.animation = "";
