@@ -6,6 +6,7 @@ const counterInfoEl = document.getElementById("counter-info");
 const counterResultEl = document.getElementById("counter-result");
 const votesListEl = document.getElementById("votes-list");
 const timerBarEl = document.querySelector("#timer-bar > i");
+const liveAvgEl = document.getElementById("live-avg");
 
 const params = (new URL(document.location)).searchParams;
 const channel = params.get("channel") || null;
@@ -89,6 +90,31 @@ function bumpCounter() {
   counterInfoEl.classList.add("bump");
 }
 
+// Живая средняя оценка во время голосования
+function updateLiveAverage() {
+  if (!liveAvgEl) return;
+  if (!users.length) {
+    liveAvgEl.textContent = "—";
+    liveAvgEl.classList.remove("tier-low", "tier-mid", "tier-high", "tick");
+    return;
+  }
+  const average = score / users.length;
+  const rounded = Math.min(26, Math.max(1, Math.round(average)));
+  const category = valueToCategory[rounded] || "—";
+
+  // Тон: 1-8 низ шкалы, 9-18 середина, 19-26 верх
+  liveAvgEl.classList.remove("tier-low", "tier-mid", "tier-high");
+  liveAvgEl.classList.add(rounded <= 8 ? "tier-low" : rounded <= 18 ? "tier-mid" : "tier-high");
+
+  // Пульс только если текст реально поменялся
+  if (liveAvgEl.textContent !== category) {
+    liveAvgEl.textContent = category;
+    liveAvgEl.classList.remove("tick");
+    void liveAvgEl.offsetWidth;
+    liveAvgEl.classList.add("tick");
+  }
+}
+
 function messageHandler(user, message) {
   if (state !== 1) return;
   if (users.includes(user)) return;
@@ -106,6 +132,7 @@ function messageHandler(user, message) {
     users.push(user);
     counterInfoEl.innerText = users.length;
     bumpCounter();
+    updateLiveAverage();
   }
 }
 
@@ -153,6 +180,7 @@ function start(time) {
   users = [];
   votes = [];
   score = 0.0;
+  updateLiveAverage();
   timerToTime();
 }
 
