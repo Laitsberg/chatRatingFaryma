@@ -5,6 +5,7 @@ const scoreEl = document.getElementById("score");
 const counterInfoEl = document.getElementById("counter-info");
 const counterResultEl = document.getElementById("counter-result");
 const votesListEl = document.getElementById("votes-list");
+const timerBarEl = document.querySelector("#timer-bar > i");
 
 const params = (new URL(document.location)).searchParams;
 const channel = params.get("channel") || null;
@@ -13,6 +14,7 @@ const defaultTime = parseInt(params.get("time")) || 60;
 let timer = null;
 let state = 0; // 0 - ожидание, 1 - голосование, 2 - результаты
 let timerValue = 0;
+let totalTime = 0; // полная длительность голосования (для полосы-прогресса)
 let users = [];
 let votes = []; // {user, rating, value}
 let score = 0.0;
@@ -50,6 +52,13 @@ const categories = {
 // Инвертированный map для поиска категории по значению
 const valueToCategory = Object.fromEntries(Object.entries(categories).map(([k, v]) => [v, k.charAt(0).toUpperCase() + k.slice(1)]));
 
+// Анимация "подскока" счётчика при новом голосе
+function bumpCounter() {
+  counterInfoEl.classList.remove("bump");
+  void counterInfoEl.offsetWidth; // перезапуск CSS-анимации
+  counterInfoEl.classList.add("bump");
+}
+
 function messageHandler(user, message) {
   if (state !== 1) return;
   if (users.includes(user)) return;
@@ -63,6 +72,7 @@ function messageHandler(user, message) {
     votes.push({ user, rating, value });
     users.push(user);
     counterInfoEl.innerText = users.length;
+    bumpCounter();
   }
 }
 
@@ -102,7 +112,9 @@ function start(time) {
   timer && (typeof timer === 'number' ? clearTimeout(timer) : clearInterval(timer));
   counterInfoEl.innerText = "0";
   timerValue = time;
+  totalTime = time;
   timer = setInterval(onTimer, 1000);
+  infoEl.classList.remove("ending");
   infoEl.style.opacity = 1;
   state = 1;
   users = [];
@@ -143,17 +155,24 @@ function finish() {
   scoreEl.innerHTML = resultText;
   counterResultEl.textContent = users.length;
 
+  // Перезапуск "поп"-анимации итоговой оценки
+  scoreEl.style.animation = "none";
+  void scoreEl.offsetWidth;
+  scoreEl.style.animation = "";
+
+  infoEl.classList.remove("ending");
   infoEl.style.opacity = 0;
   resultEl.style.opacity = 1;
 
   state = 2;
-  timer = setTimeout(stop, 60000); // 10 сек на результат
+  timer = setTimeout(stop, 60000); // 60 сек на показ результата
 }
 
 function stop() {
   timer && (typeof timer === 'number' ? clearTimeout(timer) : clearInterval(timer));
   resultEl.style.opacity = 0;
   votesListEl.innerHTML = "";
+  infoEl.classList.remove("ending");
   state = 0;
 }
 
@@ -172,6 +191,13 @@ function timerToTime() {
   minutes = minutes.toString().padStart(2, "0");
   seconds = seconds.toString().padStart(2, "0");
   timerEl.innerText = `${minutes}:${seconds}`;
+
+  // Полоса-прогресс под таймером
+  if (timerBarEl && totalTime > 0) {
+    timerBarEl.style.setProperty("--p", (timerValue / totalTime * 100) + "%");
+  }
+  // Последние 10 секунд — режим "на исходе"
+  infoEl.classList.toggle("ending", timerValue <= 10);
 }
 
 window.onload = () => {
@@ -182,6 +208,3 @@ window.onload = () => {
     document.body.style.backgroundColor = "black";
   }
 };
-
-
-
