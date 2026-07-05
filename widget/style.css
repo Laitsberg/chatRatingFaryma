@@ -20,26 +20,26 @@
 body {
     background: transparent !important;
     margin: 0;
-    padding: 20px;
+    padding: 6px;
     font-family: "Rubik", Arial, sans-serif;
     color: var(--text);
     overflow: hidden;
 }
 
-/* Сцена — держит обе панели друг над другом (кроссфейд) */
+/* Сцена — занимает весь размер Browser Source в OBS.
+   Задаёшь размер источника (напр. 450x300) — виджет подстроится. */
 .stage {
     position: relative;
-    width: 420px;
-    height: 483px;
-    max-width: 95vw;
+    width: calc(100vw - 12px);
+    height: calc(100vh - 12px);
 }
 
 /* --- Панели --- */
 #info, #result {
     position: absolute;
     inset: 0;
-    padding: 26px 24px;
-    border-radius: 22px;
+    padding: 14px 18px;
+    border-radius: 18px;
     background:
         radial-gradient(120% 80% at 50% -10%, rgba(255, 122, 0, 0.18), transparent 60%),
         var(--panel);
@@ -70,14 +70,14 @@ body {
 
 /* --- Эйброу (маленькая подпись-метка) --- */
 .eyebrow {
-    font-size: 12px;
-    letter-spacing: 3px;
+    font-size: 10px;
+    letter-spacing: 2.5px;
     text-transform: uppercase;
     color: var(--text-dim);
-    margin: 2px 0 10px;
+    margin: 0 0 6px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 7px;
 }
 
 /* Пульсирующая точка "идёт голосование" */
@@ -92,29 +92,29 @@ body {
 /* --- Заголовки --- */
 #info h2, #result h2 {
     font-family: "Russo One", "Rubik", sans-serif;
-    margin: 0 0 12px 0;
-    font-size: 27px;
+    margin: 0 0 6px 0;
+    font-size: 20px;
     line-height: 1.05;
     letter-spacing: 0.5px;
     text-shadow: 0 0 14px rgba(255, 102, 0, 0.7);
 }
 
 #info p, #result p {
-    margin: 6px 0;
-    font-size: 15px;
-    line-height: 1.4;
+    margin: 3px 0;
+    font-size: 13px;
+    line-height: 1.35;
     color: var(--text-dim);
 }
 
 /* --- Таймер --- */
 #timer {
     font-family: "Russo One", monospace;
-    font-size: 58px;
+    font-size: 44px;
     font-weight: 400;
     color: var(--orange);
     letter-spacing: 2px;
     text-shadow: 0 0 18px rgba(255, 122, 0, 0.85);
-    margin: 8px 0 4px;
+    margin: 4px 0 2px;
     animation: timerBreath 2.4s ease-in-out infinite;
     font-variant-numeric: tabular-nums;
 }
@@ -128,7 +128,7 @@ body {
     border-radius: 4px;
     background: rgba(255, 255, 255, 0.12);
     overflow: hidden;
-    margin: 4px 0 12px;
+    margin: 3px 0 6px;
 }
 #timer-bar > i {
     display: block;
@@ -146,7 +146,7 @@ body {
 /* --- Счётчики --- */
 #counter-info, #counter-result {
     font-family: "Russo One", sans-serif;
-    font-size: 24px;
+    font-size: 18px;
     color: var(--amber) !important;
     text-shadow: 0 0 12px rgba(255, 209, 102, 0.6);
     display: inline-block;
@@ -156,15 +156,15 @@ body {
 
 /* --- Подсказка с примерами (чипсы) --- */
 .hint {
-    margin-top: 14px;
+    margin-top: 6px;
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 6px;
+    gap: 5px;
 }
 .hint .chip {
-    font-size: 12px;
-    padding: 4px 10px;
+    font-size: 11px;
+    padding: 3px 9px;
     border-radius: 999px;
     background: rgba(255, 122, 0, 0.14);
     border: 1px solid rgba(255, 122, 0, 0.35);
@@ -175,11 +175,11 @@ body {
 /* --- Итоговая оценка --- */
 #score {
     font-family: "Russo One", "Rubik", sans-serif;
-    font-size: 30px !important;
+    font-size: 21px !important;
     font-weight: 400;
     color: var(--green) !important;
-    line-height: 1.25;
-    margin: 10px 0;
+    line-height: 1.3;
+    margin: 5px 0;
     text-shadow: 0 0 16px rgba(124, 255, 155, 0.55);
     animation: scorePop 0.6s cubic-bezier(0.2, 1.4, 0.4, 1) both;
 }
@@ -187,7 +187,7 @@ body {
 /* --- Список голосов --- */
 #votes-list {
     list-style: none;
-    margin: 12px 0 0;
+    margin: 6px 0 0;
     padding: 0 4px;
     width: 100%;
     flex: 1 1 auto;
@@ -204,11 +204,11 @@ body {
     display: flex;
     justify-content: space-between;
     gap: 10px;
-    padding: 6px 12px;
+    padding: 3px 10px;
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 122, 0, 0.18);
-    border-radius: 8px;
-    font-size: 14px;
+    border-radius: 7px;
+    font-size: 12px;
     text-align: left;
     animation: voteIn 0.45s ease both;
 }
