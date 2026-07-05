@@ -1,88 +1,265 @@
+/* ============================================================
+   RATING WIDGET — оформление для OBS Browser Source
+   Тема: тёплый неон-оранж. Drop-in: те же ID, что и раньше.
+   ============================================================ */
+
+:root {
+    --orange:        #ff7a00;
+    --orange-bright: #ffab40;
+    --amber:         #ffd166;   /* счётчик / акцент */
+    --green:         #7cff9b;   /* позитивный итог */
+    --hot:           #ff3b3b;   /* таймер на исходе */
+    --panel:         rgba(14, 8, 3, 0.82);
+    --panel-edge:    rgba(255, 122, 0, 0.55);
+    --text:          #ffffff;
+    --text-dim:      rgba(255, 236, 220, 0.72);
+}
+
+* { box-sizing: border-box; }
+
 body {
     background: transparent !important;
     margin: 0;
     padding: 20px;
-    font-family: Arial, sans-serif;
-    color: white;
+    font-family: "Rubik", Arial, sans-serif;
+    color: var(--text);
     overflow: hidden;
 }
 
-.container {
-    position: relative; /* Контейнер для фиксации позиции */
+/* Сцена — держит обе панели друг над другом (кроссфейд) */
+.stage {
+    position: relative;
     width: 420px;
-    height: 483px; /* Фиксированный размер по вашему скриншоту */
+    height: 483px;
     max-width: 95vw;
 }
 
+/* --- Панели --- */
 #info, #result {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7) !important;
-    border: 2px solid #ff6600 !important; /* Оранжевая рамка */
-    border-radius: 15px;
-    padding: 20px;
-    box-shadow: 0 0 20px rgba(255, 102, 0, 0.6) !important; /* Оранжевая тень */
+    inset: 0;
+    padding: 26px 24px;
+    border-radius: 22px;
+    background:
+        radial-gradient(120% 80% at 50% -10%, rgba(255, 122, 0, 0.18), transparent 60%),
+        var(--panel);
+    border: 1px solid var(--panel-edge);
+    box-shadow:
+        0 0 22px rgba(255, 102, 0, 0.35),
+        0 0 60px rgba(255, 102, 0, 0.12),
+        inset 0 0 40px rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(6px);
     text-align: center;
-    transition: opacity 0.8s ease;
-    overflow: hidden; /* Убрали скрол */
+    transition: opacity 0.6s ease;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start; /* Контент сверху */
-    align-items: center; /* Центрирование по горизонтали */
-    box-sizing: border-box; /* Учёт padding в размерах */
+    align-items: center;
+    animation: borderBreath 3.2s ease-in-out infinite;
 }
 
+/* Тонкая акцентная полоса сверху панели */
+#info::before, #result::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 12%; right: 12%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--orange-bright), transparent);
+    filter: drop-shadow(0 0 6px var(--orange));
+}
+
+/* --- Эйброу (маленькая подпись-метка) --- */
+.eyebrow {
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin: 2px 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Пульсирующая точка "идёт голосование" */
+.live-dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: var(--orange);
+    box-shadow: 0 0 10px var(--orange);
+    animation: livePulse 1.4s ease-in-out infinite;
+}
+
+/* --- Заголовки --- */
 #info h2, #result h2 {
-    margin: 0 0 15px 0;
-    font-size: 28px;
-    text-shadow: 0 0 10px #ff6600 !important; /* Оранжевая тень текста */
+    font-family: "Russo One", "Rubik", sans-serif;
+    margin: 0 0 12px 0;
+    font-size: 27px;
+    line-height: 1.05;
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 14px rgba(255, 102, 0, 0.7);
 }
 
 #info p, #result p {
-    margin: 8px 0;
-    font-size: 16px;
-    line-height: 1.4;
-}
-
-#timer {
-    font-size: 42px;
-    font-weight: bold;
-    color: #ff6600 !important; /* Оранжевый таймер */
-    text-shadow: 0 0 15px #ff6600 !important;
-    margin: 10px 0;
-}
-
-#counter-info, #counter-result {
-    font-size: 22px;
-    color: #ffa500 !important; /* Ярко-оранжевый для счётчика */
-}
-
-#score {
-    font-size: 48px !important; /* Увеличили размер итоговой оценки */
-    font-weight: bold;
-    color: #ffa500 !important; /* Оранжевый для итога */
-    margin: 15px 0;
-    text-shadow: 0 0 15px #ff6600 !important; /* Усиленная тень для акцента */
-}
-
-#votes-list {
-    background: rgba(0, 0, 0, 0.6) !important;
-    border-radius: 10px;
-    padding: 10px;
-    overflow: hidden; /* Убрали скрол для списка */
-    margin-top: 15px;
-    text-align: left;
+    margin: 6px 0;
     font-size: 15px;
-    width: 100%; /* Полная ширина */
-    flex-grow: 1; /* Занимает остаток пространства */
+    line-height: 1.4;
+    color: var(--text-dim);
+}
+
+/* --- Таймер --- */
+#timer {
+    font-family: "Russo One", monospace;
+    font-size: 58px;
+    font-weight: 400;
+    color: var(--orange);
+    letter-spacing: 2px;
+    text-shadow: 0 0 18px rgba(255, 122, 0, 0.85);
+    margin: 8px 0 4px;
+    animation: timerBreath 2.4s ease-in-out infinite;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Полоса-прогресс под таймером.
+   Без JS показывается как декоративная линия (100%).
+   Если добавишь JS-хук (см. сообщение) — будет сокращаться. */
+#timer-bar {
+    width: 70%;
+    height: 4px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.12);
+    overflow: hidden;
+    margin: 4px 0 12px;
+}
+#timer-bar > i {
+    display: block;
+    height: 100%;
+    width: var(--p, 100%);
+    background: linear-gradient(90deg, var(--orange), var(--orange-bright));
+    box-shadow: 0 0 10px var(--orange);
+    transition: width 1s linear;
+}
+
+/* Состояние "время на исходе" — включается опциональным JS-хуком */
+#info.ending #timer { color: var(--hot); text-shadow: 0 0 20px var(--hot); animation: timerUrgent 0.6s ease-in-out infinite; }
+#info.ending #timer-bar > i { background: linear-gradient(90deg, var(--hot), #ff8a5c); box-shadow: 0 0 10px var(--hot); }
+
+/* --- Счётчики --- */
+#counter-info, #counter-result {
+    font-family: "Russo One", sans-serif;
+    font-size: 24px;
+    color: var(--amber) !important;
+    text-shadow: 0 0 12px rgba(255, 209, 102, 0.6);
+    display: inline-block;
+}
+/* Класс подскока при новом голосе (опциональный JS-хук) */
+.bump { animation: bump 0.35s ease; }
+
+/* --- Подсказка с примерами (чипсы) --- */
+.hint {
+    margin-top: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+}
+.hint .chip {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(255, 122, 0, 0.14);
+    border: 1px solid rgba(255, 122, 0, 0.35);
+    color: var(--orange-bright);
+    white-space: nowrap;
+}
+
+/* --- Итоговая оценка --- */
+#score {
+    font-family: "Russo One", "Rubik", sans-serif;
+    font-size: 30px !important;
+    font-weight: 400;
+    color: var(--green) !important;
+    line-height: 1.25;
+    margin: 10px 0;
+    text-shadow: 0 0 16px rgba(124, 255, 155, 0.55);
+    animation: scorePop 0.6s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+/* --- Список голосов --- */
+#votes-list {
+    list-style: none;
+    margin: 12px 0 0;
+    padding: 0 4px;
+    width: 100%;
+    flex: 1 1 auto;
+    overflow: hidden;
+    /* мягкое затухание внизу, если голосов много */
+    -webkit-mask-image: linear-gradient(180deg, #000 82%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 82%, transparent 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
 }
 
 #votes-list li {
-    margin: 4px 0;
-    padding: 4px 8px;
-    background: rgba(255, 255, 255, 0.1) !important;
-    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 122, 0, 0.18);
+    border-radius: 8px;
+    font-size: 14px;
+    text-align: left;
+    animation: voteIn 0.45s ease both;
+}
+
+/* Лёгкий каскад появления первых строк */
+#votes-list li:nth-child(1)  { animation-delay: 0.02s; }
+#votes-list li:nth-child(2)  { animation-delay: 0.06s; }
+#votes-list li:nth-child(3)  { animation-delay: 0.10s; }
+#votes-list li:nth-child(4)  { animation-delay: 0.14s; }
+#votes-list li:nth-child(5)  { animation-delay: 0.18s; }
+#votes-list li:nth-child(6)  { animation-delay: 0.22s; }
+#votes-list li:nth-child(7)  { animation-delay: 0.26s; }
+#votes-list li:nth-child(8)  { animation-delay: 0.30s; }
+#votes-list li:nth-child(n+9){ animation-delay: 0.34s; }
+
+/* ============================================================
+   Анимации
+   ============================================================ */
+@keyframes borderBreath {
+    0%, 100% { box-shadow: 0 0 22px rgba(255,102,0,0.32), 0 0 60px rgba(255,102,0,0.10), inset 0 0 40px rgba(0,0,0,0.55); }
+    50%      { box-shadow: 0 0 30px rgba(255,102,0,0.55), 0 0 80px rgba(255,102,0,0.20), inset 0 0 40px rgba(0,0,0,0.55); }
+}
+@keyframes livePulse {
+    0%, 100% { opacity: 1;   transform: scale(1);   box-shadow: 0 0 10px var(--orange); }
+    50%      { opacity: 0.5; transform: scale(0.7); box-shadow: 0 0 4px var(--orange); }
+}
+@keyframes timerBreath {
+    0%, 100% { text-shadow: 0 0 14px rgba(255,122,0,0.7); }
+    50%      { text-shadow: 0 0 24px rgba(255,122,0,1); }
+}
+@keyframes timerUrgent {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.06); }
+}
+@keyframes bump {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.35); color: #fff; }
+    100% { transform: scale(1); }
+}
+@keyframes scorePop {
+    0%   { opacity: 0; transform: scale(0.6) translateY(8px); }
+    100% { opacity: 1; transform: scale(1)   translateY(0); }
+}
+@keyframes voteIn {
+    0%   { opacity: 0; transform: translateX(-14px); }
+    100% { opacity: 1; transform: translateX(0); }
+}
+
+/* Уважаем настройку "меньше движения" */
+@media (prefers-reduced-motion: reduce) {
+    #info, #result, #timer, .live-dot, #score, #votes-list li, .bump {
+        animation: none !important;
+    }
 }
