@@ -58,6 +58,9 @@ body {
     animation: borderBreath 3.2s ease-in-out infinite;
 }
 
+/* Экран голосования: контент по центру вертикали (нет растущего списка) */
+#info { justify-content: center; }
+
 /* Тонкая акцентная полоса сверху панели */
 #info::before, #result::before {
     content: "";
