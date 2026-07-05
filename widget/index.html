@@ -4,25 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rating Widget</title>
+
+    <!-- Шрифты с полной кириллицей. Если OBS без интернета — сработают фоллбэки. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Rubik:wght@400;500;600&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="info" style="opacity: 0;">
-        <h2>ГОЛОСОВАНИЕ АКТИВНО</h2>
-        <p>Проголосовавших: <span id="counter-info" style="color:#ffff66;">0</span></p>
-        <div id="timer">01:00</div>
-        <p style="font-size:18px; margin-top:15px;">Пишите в чат: Нормас, Атлична+, Гениально, Хорошечно++ и т.д.</p>
-    </div>
+    <div class="stage">
+        <!-- ЭКРАН ГОЛОСОВАНИЯ -->
+        <div id="info" style="opacity: 0;">
+            <div class="eyebrow"><span class="live-dot"></span>Оценка стрима</div>
+            <h2>ГОЛОСОВАНИЕ ИДЁТ</h2>
+            <p>Проголосовавших: <span id="counter-info">0</span></p>
 
-    <div id="result" style="opacity: 0;">
-        <h2>ГОЛОСОВАНИЕ ЗАКОНЧЕНО</h2>
-        <p>Проголосовало: <span id="counter-result" style="color:#ffff66;">0</span></p>
-        <div id="score" style="font-size:36px; color:#66ff99;"></div>
-        <ul id="votes-list"></ul>
+            <div id="timer">01:00</div>
+            <div id="timer-bar"><i></i></div>
+
+            <p>Пишите оценку в чат:</p>
+            <div class="hint">
+                <span class="chip">Нормас</span>
+                <span class="chip">Хорошечно++</span>
+                <span class="chip">Атлична+</span>
+                <span class="chip">Гениально</span>
+            </div>
+        </div>
+
+        <!-- ЭКРАН РЕЗУЛЬТАТА -->
+        <div id="result" style="opacity: 0;">
+            <div class="eyebrow">Итоги голосования</div>
+            <h2>ГОЛОСОВАНИЕ ЗАКОНЧЕНО</h2>
+            <p>Проголосовало: <span id="counter-result">0</span></p>
+
+            <div id="score"></div>
+            <ul id="votes-list"></ul>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/comfy.js@latest/dist/comfy.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
-
