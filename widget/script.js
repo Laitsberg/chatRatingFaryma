@@ -52,6 +52,36 @@ const categories = {
 // Инвертированный map для поиска категории по значению
 const valueToCategory = Object.fromEntries(Object.entries(categories).map(([k, v]) => [v, k.charAt(0).toUpperCase() + k.slice(1)]));
 
+// ============================================================
+// СИНОНИМЫ: альтернативные написания оценок.
+// Ключ — каноническое базовое слово, значение — список синонимов.
+// Плюсы/минусы подхватываются автоматически:
+// "отлично++" засчитается как "атлична++" и т.д.
+// Чтобы добавить новый синоним — просто допиши его в список.
+// ============================================================
+const aliases = {
+  "атлична":       ["отлично", "отлична"],
+  "хорошечно":     ["хорошо"],
+  "нормас":        ["норм", "нормально"],
+  "кринж-контент": ["кринж"],
+  "ну такое":      ["нутакое"]
+};
+
+// Расширенный словарь: каноничные названия + все синонимы со всеми суффиксами.
+// aliasLookup["отлично++"] -> "атлична++"
+const aliasLookup = {};
+for (const key of Object.keys(categories)) {
+  aliasLookup[key] = key; // каноническое написание тоже валидно
+  for (const [base, alts] of Object.entries(aliases)) {
+    if (key === base || (key.startsWith(base) && /^[+-]{1,2}$/.test(key.slice(base.length)))) {
+      const suffix = key.slice(base.length);
+      for (const alt of alts) {
+        aliasLookup[alt + suffix] = key;
+      }
+    }
+  }
+}
+
 // Анимация "подскока" счётчика при новом голосе
 function bumpCounter() {
   counterInfoEl.classList.remove("bump");
@@ -65,9 +95,12 @@ function messageHandler(user, message) {
 
   message = message.trim().toLowerCase().replace(/[\uD800-\uDFFF]/gi, '');
 
-  if (categories.hasOwnProperty(message)) {
-    const value = categories[message];
-    const rating = message.charAt(0).toUpperCase() + message.slice(1);
+  // Нормализуем синонимы к каноническому написанию
+  const canonical = aliasLookup[message];
+
+  if (canonical !== undefined) {
+    const value = categories[canonical];
+    const rating = canonical.charAt(0).toUpperCase() + canonical.slice(1);
     score += value;
     votes.push({ user, rating, value });
     users.push(user);
