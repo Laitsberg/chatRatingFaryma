@@ -183,6 +183,24 @@ function start(time) {
   timerToTime();
 }
 
+// Конфетти для вердикта "гениально"
+function spawnConfetti() {
+  const colors = ["#ffd166", "#ff7a00", "#ffab40", "#7cff9b", "#ffffff"];
+  for (let i = 0; i < 50; i++) {
+    const c = document.createElement("i");
+    c.className = "confetti";
+    c.style.left = Math.random() * 100 + "%";
+    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+    c.style.animationDelay = (Math.random() * 0.7) + "s";
+    c.style.animationDuration = (1.6 + Math.random() * 1.4) + "s";
+    c.style.transform = `rotate(${Math.random() * 360}deg)`;
+    if (Math.random() < 0.4) c.style.borderRadius = "50%"; // часть — кружочки
+    resultEl.appendChild(c);
+    // самоуничтожение после падения
+    c.addEventListener("animationend", () => c.remove());
+  }
+}
+
 function finish() {
   timer && (typeof timer === 'number' ? clearTimeout(timer) : clearInterval(timer));
 
@@ -197,6 +215,17 @@ function finish() {
     // Вердикт — главный заголовок, цвет по тону оценки
     scoreEl.textContent = category;
     scoreEl.classList.add(rounded <= 8 ? "tier-low" : rounded <= 18 ? "tier-mid" : "tier-high");
+
+    // Эпик-эффекты для крайних вердиктов
+    resultEl.classList.remove("epic-good", "epic-bad");
+    scoreEl.removeAttribute("data-text");
+    if (rounded >= 24) {            // гениально--/-/…
+      resultEl.classList.add("epic-good");
+      spawnConfetti();
+    } else if (rounded <= 3) {      // кринж-контент/+/++
+      resultEl.classList.add("epic-bad");
+      scoreEl.setAttribute("data-text", category); // для глитч-слоёв
+    }
 
     // Мета-строка: голоса + топ категорий
     const counts = {};
@@ -238,6 +267,9 @@ function stop() {
   timer && (typeof timer === 'number' ? clearTimeout(timer) : clearInterval(timer));
   resultEl.style.opacity = 0;
   votesListEl.innerHTML = "";
+  resultEl.classList.remove("epic-good", "epic-bad");
+  scoreEl.removeAttribute("data-text");
+  resultEl.querySelectorAll(".confetti").forEach(c => c.remove());
   infoEl.classList.remove("ending");
   state = 0;
 }
