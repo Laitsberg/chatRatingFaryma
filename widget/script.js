@@ -82,6 +82,27 @@ for (const key of Object.keys(categories)) {
   }
 }
 
+// Ключи от длинных к коротким, чтобы "хорошечно++" матчился раньше "хорошечно"
+const aliasKeys = Object.keys(aliasLookup).sort((a, b) => b.length - a.length);
+
+// Ищем оценку в НАЧАЛЕ сообщения. После неё допускается любой текст
+// ("хорошечно за вокал"), пробел или знаки препинания ("гениально!!!").
+function extractRating(msg) {
+  // Плюсы/минусы через пробел: "хорошечно ++" -> "хорошечно++"
+  msg = msg.replace(/\s+([+-]{1,2})(?=\s|$)/g, "$1");
+
+  if (aliasLookup[msg] !== undefined) return aliasLookup[msg]; // точное совпадение
+
+  for (const key of aliasKeys) {
+    if (msg.startsWith(key)) {
+      const next = msg.charAt(key.length);
+      // граница слова: пробел или пунктуация, чтобы "нормальный" не считался за "нормально"
+      if (/[\s!?.,:;)("«»]/.test(next)) return aliasLookup[key];
+    }
+  }
+  return undefined;
+}
+
 // Анимация "подскока" счётчика при новом голосе
 function bumpCounter() {
   counterInfoEl.classList.remove("bump");
@@ -120,8 +141,8 @@ function messageHandler(user, message) {
 
   message = message.trim().toLowerCase().replace(/[\uD800-\uDFFF]/gi, '');
 
-  // Нормализуем синонимы к каноническому написанию
-  const canonical = aliasLookup[message];
+  // Оценка в начале сообщения (+ синонимы, + суффиксы через пробел, + текст после)
+  const canonical = extractRating(message);
 
   if (canonical !== undefined) {
     const value = categories[canonical];
