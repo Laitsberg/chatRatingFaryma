@@ -74,7 +74,7 @@ body {
 
 /* --- Эйброу (маленькая подпись-метка) --- */
 .eyebrow {
-    font-size: 10px;
+    font-size: 12px;
     letter-spacing: 2.5px;
     text-transform: uppercase;
     color: var(--text-dim);
@@ -97,7 +97,7 @@ body {
 #info h2, #result h2 {
     font-family: "Russo One", "Rubik", sans-serif;
     margin: 0 0 6px 0;
-    font-size: 20px;
+    font-size: 25px;
     line-height: 1.05;
     letter-spacing: 0.5px;
     text-shadow: 0 0 14px rgba(255, 102, 0, 0.7);
@@ -105,7 +105,7 @@ body {
 
 #info p, #result p {
     margin: 3px 0;
-    font-size: 13px;
+    font-size: 16px;
     line-height: 1.35;
     color: var(--text-dim);
 }
@@ -113,7 +113,7 @@ body {
 /* --- Таймер --- */
 #timer {
     font-family: "Russo One", monospace;
-    font-size: 44px;
+    font-size: 54px;
     font-weight: 400;
     color: var(--orange);
     letter-spacing: 2px;
@@ -153,7 +153,7 @@ body {
 }
 #live-avg {
     font-family: "Russo One", sans-serif;
-    font-size: 15px;
+    font-size: 19px;
     color: var(--text-dim);
     display: inline-block;
     transition: color 0.4s ease;
@@ -173,7 +173,7 @@ body {
 /* --- Счётчики --- */
 #counter-info, #counter-result {
     font-family: "Russo One", sans-serif;
-    font-size: 18px;
+    font-size: 22px;
     color: var(--amber) !important;
     text-shadow: 0 0 12px rgba(255, 209, 102, 0.6);
     display: inline-block;
@@ -190,7 +190,7 @@ body {
     gap: 5px;
 }
 .hint .chip {
-    font-size: 11px;
+    font-size: 14px;
     padding: 3px 9px;
     border-radius: 999px;
     background: rgba(255, 122, 0, 0.14);
@@ -202,7 +202,7 @@ body {
 /* --- Вердикт (заголовок экрана результата) --- */
 #score {
     font-family: "Russo One", "Rubik", sans-serif;
-    font-size: 26px !important;
+    font-size: 32px !important;
     font-weight: 400;
     line-height: 1.2;
     margin: 2px 0 2px !important;
@@ -214,12 +214,12 @@ body {
 
 /* Мета-строка под вердиктом */
 #result-meta {
-    font-size: 13px;
+    font-size: 16px;
     color: var(--text-dim);
     margin: 0 0 4px;
 }
 #result-meta #counter-result {
-    font-size: 14px;
+    font-size: 17px;
 }
 
 /* --- Список голосов --- */
@@ -246,7 +246,7 @@ body {
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 122, 0, 0.18);
     border-radius: 7px;
-    font-size: 12px;
+    font-size: 15px;
     text-align: left;
     animation: voteIn 0.45s ease both;
 }
