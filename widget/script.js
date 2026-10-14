@@ -11,6 +11,12 @@ const params = (new URL(document.location)).searchParams;
 const channel = params.get("channel") || null;
 const defaultTime = parseInt(params.get("time")) || 60;
 
+// YouTube (необязательно): API-ключ + канал (@handle или ID вида UC...) либо ID трансляции
+const ytKey = params.get("yt_key") || null;
+const ytChannel = params.get("yt_channel") || null;
+const ytVideo = params.get("yt_video") || null;
+const ytEnabled = !!ytKey;
+
 let timer = null;
 let state = 0; // 0 - ожидание, 1 - голосование, 2 - результаты
 let timerValue = 0;
@@ -135,9 +141,11 @@ function updateLiveAverage() {
   }
 }
 
-function messageHandler(user, message) {
+// uid — уникальный id голосующего (у Ютуба ники не уникальны, поэтому там id канала),
+// platform — откуда голос ("twitch" / "youtube")
+function messageHandler(user, message, uid = user, platform = "twitch") {
   if (state !== 1) return;
-  if (users.includes(user)) return;
+  if (users.includes(uid)) return;
 
   message = message.trim().toLowerCase().replace(/[\uD800-\uDFFF]/gi, '');
 
@@ -148,44 +156,51 @@ function messageHandler(user, message) {
     const value = categories[canonical];
     const rating = canonical.charAt(0).toUpperCase() + canonical.slice(1);
     score += value;
-    votes.push({ user, rating, value });
-    users.push(user);
+    votes.push({ user, rating, value, platform });
+    users.push(uid);
     counterInfoEl.innerText = users.length;
     bumpCounter();
     updateLiveAverage();
   }
 }
 
-function init() {
-  ComfyJS.onChat = (user, message, flags, self, extra) => {
-    messageHandler(user, message);
-  };
-
-  ComfyJS.onCommand = (user, command, message, flags, extra) => {
-    if (flags.broadcaster || flags.mod || user == "laitsberg") { // Замените на свой ник, если нужно
-      if (command === "оценка") {
-        if (state === 0) {
-          let time = message.split(" ")[0];
-          if (time.endsWith("m") || time.endsWith("м")) {
-            time = parseInt(time.slice(0, -1)) * 60;
-          } else {
-            time = parseInt(time);
-          }
-          if (!isNaN(time) && time > 0) {
-            start(time);
-          } else {
-            start(defaultTime);
-          }
-        } else if (state === 1) {
-          finish();
-        } else if (state === 2) {
-          stop();
-        }
-      }
+// Команда !оценка — общая для Твича и Ютуба
+function handleCommand(command, message, isMod) {
+  if (!isMod || command !== "оценка") return;
+  if (state === 0) {
+    let time = message.split(" ")[0];
+    if (time.endsWith("m") || time.endsWith("м")) {
+      time = parseInt(time.slice(0, -1)) * 60;
+    } else {
+      time = parseInt(time);
     }
-  };
+    if (!isNaN(time) && time > 0) {
+      start(time);
+    } else {
+      start(defaultTime);
+    }
+  } else if (state === 1) {
+    finish();
+  } else if (state === 2) {
+    stop();
+  }
+}
 
-  ComfyJS.Init(channel);
+function init() {
+  if (channel) {
+    ComfyJS.onChat = (user, message, flags, self, extra) => {
+      messageHandler(user, message);
+    };
+
+    ComfyJS.onCommand = (user, command, message, flags, extra) => {
+      // Замените на свой ник, если нужно
+      handleCommand(command, message, flags.broadcaster || flags.mod || user == "laitsberg");
+    };
+
+    ComfyJS.Init(channel);
+  }
+
+  if (ytEnabled) ytInit();
 }
 
 function start(time) {
@@ -202,6 +217,7 @@ function start(time) {
   score = 0.0;
   updateLiveAverage();
   timerToTime();
+  ytStartPolling();
 }
 
 // Конфетти для вердикта "гениально"
@@ -263,6 +279,7 @@ function finish() {
     votes.forEach(vote => {
       const li = document.createElement("li");
       li.textContent = `${vote.user}: ${vote.rating}`;
+      if (vote.platform === "youtube") li.classList.add("yt");
       votesListEl.appendChild(li);
     });
   } else {
@@ -319,11 +336,203 @@ function timerToTime() {
   infoEl.classList.toggle("ending", timerValue <= 10);
 }
 
+// ============================================================
+// YOUTUBE: чтение чата через YouTube Data API v3.
+// Каждый запрос сообщений тратит 5 единиц дневной квоты (бесплатно ~10 000),
+// поэтому при подключённом Твиче чат Ютуба опрашивается ТОЛЬКО во время
+// голосования, а запускается оно командой из Твича (или модером Ютуба,
+// пока голосование идёт — чтобы досрочно завершить).
+// Если Твич не указан — опрос постоянный, чтобы ловить !оценка с Ютуба.
+// ============================================================
+const YT_API = "https://www.googleapis.com/youtube/v3/";
+const YT_IDLE_INTERVAL = 10000;   // минимальный интервал опроса вне голосования
+const YT_RETRY_INTERVAL = 30000;  // повтор, если эфир не найден / ошибка
+const YT_QUOTA_RETRY = 600000;    // квота кончилась — пробуем раз в 10 минут
+
+const yt = {
+  chatId: null,
+  pageToken: null,
+  active: false,      // идёт цикл опроса
+  sinceTime: 0,       // сообщения, отправленные раньше, игнорируем
+  searchUsed: false,  // дорогой поиск (100 ед.) делаем максимум раз за загрузку
+};
+
+const ytStatusEl = document.getElementById("yt-status");
+let ytStatusTimer = null;
+
+// Короткая плашка внизу виджета — чтобы стример видел проблемы с Ютубом прямо в OBS
+function ytStatus(text, isError = true) {
+  (isError ? console.warn : console.log)(text);
+  if (!ytStatusEl) return;
+  ytStatusEl.textContent = text;
+  ytStatusEl.classList.toggle("error", isError);
+  ytStatusEl.classList.add("show");
+  clearTimeout(ytStatusTimer);
+  ytStatusTimer = setTimeout(() => ytStatusEl.classList.remove("show"), isError ? 15000 : 5000);
+}
+
+async function ytRequest(method, query) {
+  const url = new URL(YT_API + method);
+  for (const [k, v] of Object.entries({ ...query, key: ytKey })) url.searchParams.set(k, v);
+  const res = await fetch(url);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(data.error?.message || `HTTP ${res.status}`);
+    err.reason = data.error?.errors?.[0]?.reason || data.error?.details?.[0]?.reason || String(res.status);
+    throw err;
+  }
+  return data;
+}
+
+function ytErrorText(e) {
+  const r = e.reason || "";
+  if (r === "quotaExceeded" || r === "dailyLimitExceeded") return "Ютуб: закончилась дневная квота API";
+  if (r === "keyInvalid" || r === "API_KEY_INVALID" || /API key not valid/i.test(e.message)) return "Ютуб: неверный API-ключ";
+  if (r === "accessNotConfigured" || r === "SERVICE_DISABLED") return "Ютуб: в Google Cloud не включён YouTube Data API v3";
+  if (/referer|referrer/i.test(r + e.message)) return "Ютуб: ключ ограничен по сайтам — добавь laitsberg.github.io";
+  if (r === "liveChatEnded") return "Ютуб: эфир закончился";
+  if (r === "liveChatDisabled") return "Ютуб: на трансляции выключен чат";
+  if (r === "liveChatNotFound") return "Ютуб: чат трансляции не найден";
+  return "Ютуб: ошибка — " + e.message;
+}
+
+// activeLiveChatId трансляции, которая идёт прямо сейчас
+function ytPickLiveChat(videos) {
+  const live = (videos.items || []).find(v => {
+    const d = v.liveStreamingDetails;
+    return d && d.activeLiveChatId && d.actualStartTime && !d.actualEndTime;
+  });
+  return live ? live.liveStreamingDetails.activeLiveChatId : null;
+}
+
+// Ищем чат текущего эфира. Через плейлист загрузок канала это стоит ~3 единицы квоты.
+async function ytFindLiveChatId() {
+  if (ytVideo) {
+    const v = await ytRequest("videos", { part: "liveStreamingDetails", id: ytVideo });
+    return ytPickLiveChat(v);
+  }
+
+  // 1) канал -> плейлист загрузок (1 ед.)
+  const byHandle = ytChannel.startsWith("@");
+  const ch = await ytRequest("channels", { part: "contentDetails", [byHandle ? "forHandle" : "id"]: ytChannel });
+  const channelItem = ch.items?.[0];
+  if (!channelItem) throw Object.assign(new Error("канал не найден"), { reason: "channelNotFound" });
+  const uploads = channelItem.contentDetails?.relatedPlaylists?.uploads;
+
+  // 2) последние видео канала (1 ед.) -> 3) какое из них сейчас в эфире (1 ед.)
+  if (uploads) {
+    const pl = await ytRequest("playlistItems", { part: "contentDetails", playlistId: uploads, maxResults: 10 });
+    const ids = (pl.items || []).map(i => i.contentDetails.videoId);
+    if (ids.length) {
+      const chatId = ytPickLiveChat(await ytRequest("videos", { part: "liveStreamingDetails", id: ids.join(",") }));
+      if (chatId) return chatId;
+    }
+  }
+
+  // 4) запасной вариант — поиск (100 ед.), только один раз за загрузку виджета
+  if (yt.searchUsed) return null;
+  yt.searchUsed = true;
+  const s = await ytRequest("search", { part: "id", channelId: channelItem.id, eventType: "live", type: "video", maxResults: 1 });
+  const videoId = s.items?.[0]?.id?.videoId;
+  if (!videoId) return null;
+  return ytPickLiveChat(await ytRequest("videos", { part: "liveStreamingDetails", id: videoId }));
+}
+
+async function ytEnsureChat() {
+  if (yt.chatId) return true;
+  yt.chatId = await ytFindLiveChatId();
+  if (!yt.chatId) {
+    ytStatus("Ютуб: эфир не найден (стрим ещё не начался?)");
+    return false;
+  }
+  yt.pageToken = null;
+  ytStatus("Ютуб: чат подключён", false);
+  return true;
+}
+
+function ytShouldPoll() {
+  return ytEnabled && (state === 1 || !channel);
+}
+
+function ytStartPolling() {
+  if (!ytEnabled) return;
+  yt.sinceTime = Date.now() - 3000; // небольшой запас на расхождение часов
+  if (yt.active) return;
+  yt.active = true;
+  yt.pageToken = null;
+  ytPoll();
+}
+
+function ytHandleMessage(item) {
+  const s = item.snippet, a = item.authorDetails;
+  if (!s || !a || s.type !== "textMessageEvent") return;
+  if (Date.parse(s.publishedAt) < yt.sinceTime) return; // старые сообщения из истории чата
+
+  const text = (s.textMessageDetails?.messageText || s.displayMessage || "").trim();
+  if (text.startsWith("!")) {
+    const [command, ...rest] = text.slice(1).split(/\s+/);
+    handleCommand(command.toLowerCase(), rest.join(" "), a.isChatOwner || a.isChatModerator);
+    return;
+  }
+  messageHandler(a.displayName, text, "yt:" + a.channelId, "youtube");
+}
+
+async function ytPoll() {
+  if (!ytShouldPoll()) {
+    yt.active = false;
+    yt.pageToken = null;
+    return;
+  }
+
+  let delay;
+  try {
+    if (await ytEnsureChat()) {
+      const query = { liveChatId: yt.chatId, part: "snippet,authorDetails", maxResults: 2000 };
+      if (yt.pageToken) query.pageToken = yt.pageToken;
+      const data = await ytRequest("liveChat/messages", query);
+      yt.pageToken = data.nextPageToken || null;
+      (data.items || []).forEach(ytHandleMessage);
+
+      if (data.offlineAt) { // эфир закончился — в следующий раз ищем новый
+        yt.chatId = null;
+        yt.pageToken = null;
+      }
+      delay = data.pollingIntervalMillis || 5000;
+      if (state !== 1) delay = Math.max(delay, YT_IDLE_INTERVAL);
+    } else {
+      delay = YT_RETRY_INTERVAL;
+    }
+  } catch (e) {
+    ytStatus(ytErrorText(e));
+    if (["liveChatEnded", "liveChatNotFound", "liveChatDisabled", "forbidden"].includes(e.reason)) {
+      yt.chatId = null;
+      yt.pageToken = null;
+    }
+    delay = (e.reason === "quotaExceeded" || e.reason === "dailyLimitExceeded") ? YT_QUOTA_RETRY : YT_RETRY_INTERVAL;
+  }
+
+  setTimeout(ytPoll, delay);
+}
+
+function ytInit() {
+  if (!ytChannel && !ytVideo) {
+    ytStatus("Ютуб: в ссылке нет yt_channel (или yt_video)");
+    return;
+  }
+  if (!channel) {
+    // Только Ютуб: опрос постоянный, чтобы ловить !оценка
+    ytStartPolling();
+  } else {
+    // Сразу проверяем ключ и эфир, чтобы ошибка была видна при добавлении в OBS
+    ytEnsureChat().catch(e => ytStatus(ytErrorText(e)));
+  }
+}
+
 window.onload = () => {
-  if (channel) {
+  if (channel || ytEnabled) {
     init();
   } else {
-    document.body.textContent = "НЕ УКАЗАН ТВИЧ КАНАЛ (в ссылке добавить ?channel=КАНАЛ)";
+    document.body.textContent = "НЕ УКАЗАН КАНАЛ (в ссылке добавить ?channel=ТВИЧ_КАНАЛ и/или &yt_key=КЛЮЧ&yt_channel=@ЮТУБ_КАНАЛ)";
     document.body.style.backgroundColor = "black";
   }
 };
