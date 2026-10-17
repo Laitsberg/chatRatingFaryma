@@ -262,6 +262,33 @@ body {
 #votes-list li:nth-child(8)  { animation-delay: 0.30s; }
 #votes-list li:nth-child(n+9){ animation-delay: 0.34s; }
 
+/* Голос с Ютуба — красный значок ▶ перед ником */
+#votes-list li.yt { justify-content: flex-start; gap: 6px; }
+#votes-list li.yt::before { content: "▶"; color: #ff3b3b; font-size: 12px; align-self: center; }
+
+/* --- Статус Ютуба --- */
+#yt-status {
+    position: absolute;
+    left: 50%;
+    bottom: 4px;
+    transform: translateX(-50%);
+    max-width: 95%;
+    padding: 4px 10px;
+    border-radius: 7px;
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    color: var(--text-dim);
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+#yt-status.show  { opacity: 1; }
+#yt-status.error { color: #ff6b5c; border-color: rgba(255, 59, 59, 0.6); }
+
 /* ============================================================
    Эпик-эффекты для крайних вердиктов
    ============================================================ */

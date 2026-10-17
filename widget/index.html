@@ -24,7 +24,7 @@
             <div id="timer-bar"><i></i></div>
             <p class="live-avg-wrap">Средняя: <span id="live-avg">—</span></p>
 
-            <p>Пишите оценку в чат:</p>
+            <p id="chat-note">Пишите оценку в чат:</p>
             <div class="hint">
                 <span class="chip">Нормас</span>
                 <span class="chip">Хорошечно++</span>
@@ -40,6 +40,9 @@
             <p id="result-meta">Голосов: <span id="counter-result">0</span></p>
             <ul id="votes-list"></ul>
         </div>
+
+        <!-- Статус подключения к Ютубу (появляется ненадолго) -->
+        <div id="yt-status"></div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/comfy.js@latest/dist/comfy.min.js"></script>
