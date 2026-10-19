@@ -398,6 +398,8 @@ function ytErrorText(e) {
   if (r === "accessNotConfigured" || r === "SERVICE_DISABLED") return "Ютуб: в Google Cloud не включён YouTube Data API v3";
   if (/referer|referrer/i.test(r + e.message)) return "Ютуб: ключ ограничен по сайтам — добавь laitsberg.github.io";
   if (r === "liveChatDisabled") return "Ютуб: на трансляции выключен чат";
+  if (r === "channelNotFound") return "Ютуб: канал " + ytChannel + " не найден — проверь yt_channel";
+  if (r === "playlistNotFound") return "Ютуб: у канала " + ytChannel + " нет публичных видео — проверь yt_channel";
   if (r === "liveChatNotFound") return "Ютуб: чат трансляции не найден";
   return "Ютуб: ошибка — " + e.message;
 }
