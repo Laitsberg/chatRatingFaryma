@@ -402,13 +402,15 @@ function ytErrorText(e) {
   return "Ютуб: ошибка — " + e.message;
 }
 
-// activeLiveChatId трансляции, которая идёт прямо сейчас
+// activeLiveChatId трансляции: в первую очередь той, что идёт прямо сейчас,
+// иначе — запланированной, у которой уже открыт чат (зал ожидания перед эфиром)
 function ytPickLiveChat(videos) {
-  const live = (videos.items || []).find(v => {
+  const withChat = (videos.items || []).filter(v => {
     const d = v.liveStreamingDetails;
-    return d && d.activeLiveChatId && d.actualStartTime && !d.actualEndTime;
+    return d && d.activeLiveChatId && !d.actualEndTime;
   });
-  return live ? live.liveStreamingDetails.activeLiveChatId : null;
+  const pick = withChat.find(v => v.liveStreamingDetails.actualStartTime) || withChat[0];
+  return pick ? pick.liveStreamingDetails.activeLiveChatId : null;
 }
 
 // Ищем чат текущего эфира. Через плейлист загрузок канала это стоит ~3 единицы квоты.
