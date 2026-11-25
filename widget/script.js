@@ -24,6 +24,17 @@ let totalTime = 0; // полная длительность голосовани
 let users = [];
 let votes = []; // {user, rating, value}
 let score = 0.0;
+let mode = "rating"; // "rating" — оценка трека (!оценка), "duel" — выбор из двух треков (!выбор)
+let duelCounts = { 1: 0, 2: 0 };
+
+// Элементы режима "Выбор" (1 — левый трек, 2 — правый)
+const duelInfoEl = document.getElementById("duel-info");
+const duelResultEl = document.getElementById("duel-result");
+const duelTimerEl = document.getElementById("duel-timer");
+const duelTimerBarEl = document.querySelector("#duel-timer-bar > i");
+const duelCounterEl = document.getElementById("duel-counter");
+const duelSplitEl = document.getElementById("duel-split");
+const DUEL_NAMES = { 1: "Левый", 2: "Правый" };
 
 // Категории с значениями
 const categories = {
@@ -109,11 +120,34 @@ function extractRating(msg) {
   return undefined;
 }
 
+// Голос в режиме "Выбор": сообщение начинается с 1 или 2
+// ("1", "2", "111", "2 лучше", "1!" — да; "12", "1.5", "1:2", "10" — нет)
+function extractChoice(msg) {
+  const m = msg.match(/^(1+|2+)(?=$|[\s!?)("«»\uFE0F\u20E3]|[.,:;](?!\d))/);
+  return m ? Number(m[1][0]) : undefined;
+}
+
 // Анимация "подскока" счётчика при новом голосе
-function bumpCounter() {
-  counterInfoEl.classList.remove("bump");
-  void counterInfoEl.offsetWidth; // перезапуск CSS-анимации
-  counterInfoEl.classList.add("bump");
+function bumpCounter(el = counterInfoEl) {
+  el.classList.remove("bump");
+  void el.offsetWidth; // перезапуск CSS-анимации
+  el.classList.add("bump");
+}
+
+// Проценты и полоса "перетягивания" во время выбора
+function updateDuelLive() {
+  const total = duelCounts[1] + duelCounts[2];
+  const p1 = total ? Math.round(duelCounts[1] / total * 100) : 0;
+  const pct = { 1: p1, 2: 100 - p1 }; // в сумме ровно 100%
+  for (const n of [1, 2]) {
+    document.getElementById("duel-cnt-" + n).textContent = duelCounts[n];
+    document.getElementById("duel-pct-" + n).textContent = total ? pct[n] + "%" : "—";
+  }
+  const leftShare = total ? duelCounts[1] / total * 100 : 50;
+  duelSplitEl.style.setProperty("--l", leftShare + "%");
+  duelSplitEl.classList.toggle("empty", !total);
+  document.getElementById("duel-side-1").classList.toggle("leading", duelCounts[1] > duelCounts[2]);
+  document.getElementById("duel-side-2").classList.toggle("leading", duelCounts[2] > duelCounts[1]);
 }
 
 // Живая средняя оценка во время голосования
@@ -149,6 +183,18 @@ function messageHandler(user, message, uid = user, platform = "twitch") {
 
   message = message.trim().toLowerCase().replace(/[\uD800-\uDFFF]/gi, '');
 
+  if (mode === "duel") {
+    const choice = extractChoice(message);
+    if (choice === undefined) return;
+    duelCounts[choice] += 1;
+    votes.push({ user, choice, platform });
+    users.push(uid);
+    duelCounterEl.innerText = users.length;
+    bumpCounter(duelCounterEl);
+    updateDuelLive();
+    return;
+  }
+
   // Оценка в начале сообщения (+ синонимы, + суффиксы через пробел, + текст после)
   const canonical = extractRating(message);
 
@@ -164,9 +210,13 @@ function messageHandler(user, message, uid = user, platform = "twitch") {
   }
 }
 
-// Команда !оценка — общая для Твича и Ютуба
+// Команды — общие для Твича и Ютуба:
+// !оценка — оценка трека, !выбор (или !vs) — выбор между двумя треками (1 / 2)
+const COMMAND_MODES = { "оценка": "rating", "выбор": "duel", "vs": "duel" };
+
 function handleCommand(command, message, isMod) {
-  if (!isMod || command !== "оценка") return;
+  const cmdMode = COMMAND_MODES[command];
+  if (!isMod || !cmdMode) return;
   if (state === 0) {
     let time = message.split(" ")[0];
     if (time.endsWith("m") || time.endsWith("м")) {
@@ -174,11 +224,7 @@ function handleCommand(command, message, isMod) {
     } else {
       time = parseInt(time);
     }
-    if (!isNaN(time) && time > 0) {
-      start(time);
-    } else {
-      start(defaultTime);
-    }
+    start(!isNaN(time) && time > 0 ? time : defaultTime, cmdMode);
   } else if (state === 1) {
     finish();
   } else if (state === 2) {
@@ -203,26 +249,30 @@ function init() {
   if (ytEnabled) ytInit();
 }
 
-function start(time) {
+function start(time, newMode = "rating") {
   timer && (typeof timer === 'number' ? clearTimeout(timer) : clearInterval(timer));
+  mode = newMode;
   counterInfoEl.innerText = "0";
+  duelCounterEl.innerText = "0";
   timerValue = time;
   totalTime = time;
   timer = setInterval(onTimer, 1000);
   infoEl.classList.remove("ending");
-  infoEl.style.opacity = 1;
+  duelInfoEl.classList.remove("ending");
+  (mode === "duel" ? duelInfoEl : infoEl).style.opacity = 1;
   state = 1;
   users = [];
   votes = [];
   score = 0.0;
+  duelCounts = { 1: 0, 2: 0 };
   updateLiveAverage();
+  updateDuelLive();
   timerToTime();
   ytStartPolling();
 }
 
 // Конфетти для вердикта "гениально"
-function spawnConfetti() {
-  const colors = ["#ffd166", "#ff7a00", "#ffab40", "#7cff9b", "#ffffff"];
+function spawnConfetti(target = resultEl, colors = ["#ffd166", "#ff7a00", "#ffab40", "#7cff9b", "#ffffff"]) {
   for (let i = 0; i < 50; i++) {
     const c = document.createElement("i");
     c.className = "confetti";
@@ -232,14 +282,79 @@ function spawnConfetti() {
     c.style.animationDuration = (1.6 + Math.random() * 1.4) + "s";
     c.style.transform = `rotate(${Math.random() * 360}deg)`;
     if (Math.random() < 0.4) c.style.borderRadius = "50%"; // часть — кружочки
-    resultEl.appendChild(c);
+    target.appendChild(c);
     // самоуничтожение после падения
     c.addEventListener("animationend", () => c.remove());
   }
 }
 
+// Итог режима "Выбор"
+function finishDuel() {
+  const total = duelCounts[1] + duelCounts[2];
+  const winnerEl = document.getElementById("duel-winner");
+  const metaEl = document.getElementById("duel-meta");
+  const resSplit = document.getElementById("duel-res-split");
+  duelResultEl.classList.remove("win-1", "win-2", "tie");
+
+  // Списки голосов: слева — за 1, справа — за 2
+  for (const n of [1, 2]) {
+    const list = document.getElementById("duel-list-" + n);
+    list.innerHTML = "";
+    votes.filter(v => v.choice === n).forEach(vote => {
+      const li = document.createElement("li");
+      li.textContent = vote.user;
+      if (vote.platform === "youtube") li.classList.add("yt");
+      list.appendChild(li);
+    });
+  }
+
+  if (!total) {
+    winnerEl.textContent = "Нет голосов";
+    metaEl.innerHTML = "";
+    resSplit.style.display = "none";
+  } else {
+    const p1 = Math.round(duelCounts[1] / total * 100);
+    const p2 = 100 - p1;
+    resSplit.style.display = "";
+    resSplit.style.setProperty("--l", (duelCounts[1] / total * 100) + "%");
+    document.getElementById("duel-res-pct-1").textContent = p1 >= 12 ? `1 · ${p1}%` : "";
+    document.getElementById("duel-res-pct-2").textContent = p2 >= 12 ? `${p2}% · 2` : "";
+
+    if (duelCounts[1] === duelCounts[2]) {
+      winnerEl.textContent = "Ничья";
+      duelResultEl.classList.add("tie");
+      metaEl.innerHTML = `Голосов: <span class="duel-num">${total}</span> · поровну`;
+    } else {
+      const w = duelCounts[1] > duelCounts[2] ? 1 : 2;
+      winnerEl.textContent = `${DUEL_NAMES[w]} трек`;
+      duelResultEl.classList.add("win-" + w);
+      metaEl.innerHTML = `Голосов: <span class="duel-num">${total}</span> · ` +
+        `за 1 — ${duelCounts[1]}, за 2 — ${duelCounts[2]}`;
+      spawnConfetti(duelResultEl, w === 1
+        ? ["#ff7a00", "#ffab40", "#ffd166", "#ffffff"]
+        : ["#2aa8ff", "#4cc9ff", "#a8e6ff", "#ffffff"]);
+    }
+  }
+
+  // Перезапуск "поп"-анимации
+  winnerEl.style.animation = "none";
+  void winnerEl.offsetWidth;
+  winnerEl.style.animation = "";
+
+  duelInfoEl.classList.remove("ending");
+  duelInfoEl.style.opacity = 0;
+  duelResultEl.style.opacity = 1;
+}
+
 function finish() {
   timer && (typeof timer === 'number' ? clearTimeout(timer) : clearInterval(timer));
+
+  if (mode === "duel") {
+    finishDuel();
+    state = 2;
+    timer = setTimeout(stop, 60000); // 60 сек на показ результата
+    return;
+  }
 
   const metaEl = document.getElementById("result-meta");
   scoreEl.classList.remove("tier-low", "tier-mid", "tier-high");
@@ -309,6 +424,14 @@ function stop() {
   scoreEl.removeAttribute("data-text");
   resultEl.querySelectorAll(".confetti").forEach(c => c.remove());
   infoEl.classList.remove("ending");
+  // режим "Выбор"
+  duelInfoEl.style.opacity = 0;
+  duelResultEl.style.opacity = 0;
+  duelResultEl.classList.remove("win-1", "win-2", "tie");
+  duelResultEl.querySelectorAll(".confetti").forEach(c => c.remove());
+  document.getElementById("duel-list-1").innerHTML = "";
+  document.getElementById("duel-list-2").innerHTML = "";
+  duelInfoEl.classList.remove("ending");
   state = 0;
 }
 
@@ -326,14 +449,16 @@ function timerToTime() {
   let seconds = timerValue % 60;
   minutes = minutes.toString().padStart(2, "0");
   seconds = seconds.toString().padStart(2, "0");
-  timerEl.innerText = `${minutes}:${seconds}`;
+  const duel = mode === "duel";
+  (duel ? duelTimerEl : timerEl).innerText = `${minutes}:${seconds}`;
 
   // Полоса-прогресс под таймером
-  if (timerBarEl && totalTime > 0) {
-    timerBarEl.style.setProperty("--p", (timerValue / totalTime * 100) + "%");
+  const bar = duel ? duelTimerBarEl : timerBarEl;
+  if (bar && totalTime > 0) {
+    bar.style.setProperty("--p", (timerValue / totalTime * 100) + "%");
   }
   // Последние 10 секунд — режим "на исходе"
-  infoEl.classList.toggle("ending", timerValue <= 10);
+  (duel ? duelInfoEl : infoEl).classList.toggle("ending", timerValue <= 10);
 }
 
 // ============================================================
@@ -360,8 +485,12 @@ const yt = {
 
 // "Пишите оценку в чат:" -> "Пишите оценку в чат Твича или Ютуба:", пока чат Ютуба подключён
 const chatNoteEl = document.getElementById("chat-note");
+const duelNoteEl = document.getElementById("duel-note");
 function ytSetConnected(connected) {
   if (chatNoteEl) chatNoteEl.textContent = connected ? "Пишите оценку в чат Твича или Ютуба:" : "Пишите оценку в чат:";
+  if (duelNoteEl) duelNoteEl.innerHTML = connected
+    ? "Пишите <b>1</b> или <b>2</b> в чат Твича или Ютуба"
+    : "Пишите в чат <b>1</b> или <b>2</b>";
 }
 
 const ytStatusEl = document.getElementById("yt-status");
