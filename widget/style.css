@@ -14,6 +14,8 @@
     --panel-edge:    rgba(255, 122, 0, 0.55);
     --text:          #ffffff;
     --text-dim:      rgba(255, 236, 220, 0.72);
+    --left:          #ffab40;   /* режим "Выбор": трек 1 */
+    --right:         #4cc9ff;   /* режим "Выбор": трек 2 */
 }
 
 * { box-sizing: border-box; }
@@ -36,7 +38,7 @@ body {
 }
 
 /* --- Панели --- */
-#info, #result {
+#info, #result, #duel-info, #duel-result {
     position: absolute;
     inset: 0;
     padding: 14px 18px;
@@ -60,10 +62,10 @@ body {
 }
 
 /* Экран голосования: контент по центру вертикали (нет растущего списка) */
-#info { justify-content: center; }
+#info, #duel-info { justify-content: center; }
 
 /* Тонкая акцентная полоса сверху панели */
-#info::before, #result::before {
+#info::before, #result::before, #duel-info::before, #duel-result::before {
     content: "";
     position: absolute;
     top: 0; left: 12%; right: 12%;
@@ -94,7 +96,7 @@ body {
 }
 
 /* --- Заголовки --- */
-#info h2, #result h2 {
+#info h2, #result h2, #duel-info h2, #duel-result h2 {
     font-family: "Russo One", "Rubik", sans-serif;
     margin: 0 0 6px 0;
     font-size: 25px;
@@ -103,7 +105,7 @@ body {
     text-shadow: 0 0 14px rgba(255, 102, 0, 0.7);
 }
 
-#info p, #result p {
+#info p, #result p, #duel-info p, #duel-result p {
     margin: 3px 0;
     font-size: 16px;
     line-height: 1.35;
@@ -111,7 +113,7 @@ body {
 }
 
 /* --- Таймер --- */
-#timer {
+#timer, #duel-timer {
     font-family: "Russo One", monospace;
     font-size: 54px;
     font-weight: 400;
@@ -126,7 +128,7 @@ body {
 /* Полоса-прогресс под таймером.
    Без JS показывается как декоративная линия (100%).
    Если добавишь JS-хук (см. сообщение) — будет сокращаться. */
-#timer-bar {
+#timer-bar, #duel-timer-bar {
     width: 70%;
     height: 4px;
     border-radius: 4px;
@@ -134,7 +136,7 @@ body {
     overflow: hidden;
     margin: 3px 0 6px;
 }
-#timer-bar > i {
+#timer-bar > i, #duel-timer-bar > i {
     display: block;
     height: 100%;
     width: var(--p, 100%);
@@ -144,8 +146,8 @@ body {
 }
 
 /* Состояние "время на исходе" — включается опциональным JS-хуком */
-#info.ending #timer { color: var(--hot); text-shadow: 0 0 20px var(--hot); animation: timerUrgent 0.6s ease-in-out infinite; }
-#info.ending #timer-bar > i { background: linear-gradient(90deg, var(--hot), #ff8a5c); box-shadow: 0 0 10px var(--hot); }
+#info.ending #timer, #duel-info.ending #duel-timer { color: var(--hot); text-shadow: 0 0 20px var(--hot); animation: timerUrgent 0.6s ease-in-out infinite; }
+#info.ending #timer-bar > i, #duel-info.ending #duel-timer-bar > i { background: linear-gradient(90deg, var(--hot), #ff8a5c); box-shadow: 0 0 10px var(--hot); }
 
 /* --- Живая средняя оценка --- */
 .live-avg-wrap {
@@ -171,7 +173,7 @@ body {
 }
 
 /* --- Счётчики --- */
-#counter-info, #counter-result {
+#counter-info, #counter-result, #duel-counter, .duel-num {
     font-family: "Russo One", sans-serif;
     font-size: 22px;
     color: var(--amber) !important;
@@ -265,6 +267,169 @@ body {
 /* Голос с Ютуба — красный значок ▶ перед ником */
 #votes-list li.yt { justify-content: flex-start; gap: 6px; }
 #votes-list li.yt::before { content: "▶"; color: #ff3b3b; font-size: 12px; align-self: center; }
+
+/* ============================================================
+   Режим "Выбор" (!выбор): 1 — левый трек, 2 — правый
+   ============================================================ */
+#duel-timer { font-size: 44px; margin: 2px 0 0; }
+
+.duel-sides {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    margin: 4px 0 6px;
+}
+.side {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 6px 9px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 171, 64, 0.30);
+    transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+}
+.side.right { flex-direction: row-reverse; border-color: rgba(76, 201, 255, 0.30); }
+.side .key {
+    flex: none;
+    width: 40px; height: 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    font-family: "Russo One", sans-serif;
+    font-size: 28px;
+    color: var(--left);
+    background: rgba(255, 171, 64, 0.16);
+    border: 1px solid rgba(255, 171, 64, 0.6);
+    text-shadow: 0 0 12px rgba(255, 171, 64, 0.8);
+}
+.side.right .key {
+    color: var(--right);
+    background: rgba(76, 201, 255, 0.16);
+    border-color: rgba(76, 201, 255, 0.6);
+    text-shadow: 0 0 12px rgba(76, 201, 255, 0.8);
+}
+.side-body { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.1; min-width: 0; }
+.side.right .side-body { align-items: flex-end; }
+.side-name {
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    white-space: nowrap;
+}
+.side-pct {
+    font-family: "Russo One", sans-serif;
+    font-size: 24px;
+    color: var(--left);
+    font-variant-numeric: tabular-nums;
+}
+.side.right .side-pct { color: var(--right); }
+/* Кто ведёт — подсвечивается */
+.side.leading.left  { transform: scale(1.04); border-color: rgba(255, 171, 64, 0.9); box-shadow: 0 0 16px rgba(255, 171, 64, 0.45); }
+.side.leading.right { transform: scale(1.04); border-color: rgba(76, 201, 255, 0.9); box-shadow: 0 0 16px rgba(76, 201, 255, 0.45); }
+.vs {
+    flex: none;
+    font-family: "Russo One", sans-serif;
+    font-size: 15px;
+    color: var(--text-dim);
+}
+
+/* Полоса "перетягивания": левая часть — доля голосов за 1 */
+.split {
+    width: 92%;
+    height: 8px;
+    display: flex;
+    gap: 2px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.1);
+    flex: none;
+}
+.split > i { display: flex; align-items: center; min-width: 0; overflow: hidden; }
+.split > .l {
+    width: var(--l, 50%);
+    background: linear-gradient(90deg, #ff7a00, var(--left));
+    box-shadow: 0 0 10px rgba(255, 122, 0, 0.6);
+    transition: width 0.5s ease;
+}
+.split > .r {
+    flex: 1 1 0;
+    justify-content: flex-end;
+    background: linear-gradient(90deg, var(--right), #2aa8ff);
+    box-shadow: 0 0 10px rgba(42, 168, 255, 0.6);
+}
+.split.empty > i { opacity: 0.3; box-shadow: none; }
+.split.big { height: 22px; border-radius: 8px; margin: 4px 0 2px; }
+.split.big b {
+    padding: 0 8px;
+    font-family: "Russo One", sans-serif;
+    font-weight: 400;
+    font-size: 13px;
+    color: #1a0e04;
+    white-space: nowrap;
+}
+#duel-note b { color: var(--text); font-family: "Russo One", sans-serif; font-weight: 400; font-size: 18px; }
+#duel-note { margin-top: 6px !important; }
+
+/* Итог */
+#duel-winner {
+    font-size: 32px !important;
+    line-height: 1.2;
+    margin: 2px 0 2px !important;
+    animation: scorePop 0.6s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+#duel-result.win-1 #duel-winner { color: var(--left);  text-shadow: 0 0 16px rgba(255, 171, 64, 0.7); }
+#duel-result.win-2 #duel-winner { color: var(--right); text-shadow: 0 0 16px rgba(76, 201, 255, 0.7); }
+#duel-result.tie   #duel-winner { color: var(--amber); text-shadow: 0 0 16px rgba(255, 209, 102, 0.6); }
+#duel-result.win-1 { border-color: rgba(255, 171, 64, 0.8); }
+#duel-result.win-2 { border-color: rgba(76, 201, 255, 0.8); animation: blueBreath 3.2s ease-in-out infinite; }
+#duel-meta { margin: 0 0 4px !important; }
+#duel-meta .duel-num { font-size: 17px; }
+
+.duel-lists {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+    margin-top: 6px;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(180deg, #000 82%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 82%, transparent 100%);
+}
+.duel-lists ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.duel-lists li {
+    padding: 2px 8px;
+    font-size: 14px;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 171, 64, 0.25);
+    border-radius: 7px;
+    animation: voteIn 0.45s ease both;
+}
+#duel-list-2 li { text-align: right; border-color: rgba(76, 201, 255, 0.25); }
+.duel-lists li.yt::before { content: "▶ "; color: #ff3b3b; font-size: 11px; }
+
+@keyframes blueBreath {
+    0%, 100% { box-shadow: 0 0 22px rgba(42, 168, 255, 0.32), 0 0 60px rgba(42, 168, 255, 0.10), inset 0 0 40px rgba(0,0,0,0.55); }
+    50%      { box-shadow: 0 0 30px rgba(42, 168, 255, 0.55), 0 0 80px rgba(42, 168, 255, 0.20), inset 0 0 40px rgba(0,0,0,0.55); }
+}
 
 /* --- Статус Ютуба --- */
 #yt-status {
@@ -426,7 +591,8 @@ body {
 /* Уважаем настройку "меньше движения" */
 @media (prefers-reduced-motion: reduce) {
     #info, #result, #timer, .live-dot, #score, #score::before, #score::after,
-    #votes-list li, .bump, .confetti, #live-avg {
+    #votes-list li, .bump, .confetti, #live-avg,
+    #duel-info, #duel-result, #duel-timer, #duel-winner, .duel-lists li {
         animation: none !important;
     }
     .confetti { display: none; }

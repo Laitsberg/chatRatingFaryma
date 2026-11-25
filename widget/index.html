@@ -41,6 +41,51 @@
             <ul id="votes-list"></ul>
         </div>
 
+        <!-- РЕЖИМ "ВЫБОР": экран голосования 1 / 2 -->
+        <div id="duel-info" style="opacity: 0;">
+            <div class="eyebrow"><span class="live-dot"></span>Выбор трека</div>
+            <h2>КАКОЙ ТРЕК ЛУЧШЕ?</h2>
+            <p>Проголосовавших: <span id="duel-counter">0</span></p>
+
+            <div id="duel-timer">01:00</div>
+            <div id="duel-timer-bar"><i></i></div>
+
+            <div class="duel-sides">
+                <div class="side left" id="duel-side-1">
+                    <span class="key">1</span>
+                    <span class="side-body">
+                        <span class="side-name">Левый · <span id="duel-cnt-1">0</span></span>
+                        <span class="side-pct" id="duel-pct-1">—</span>
+                    </span>
+                </div>
+                <span class="vs">VS</span>
+                <div class="side right" id="duel-side-2">
+                    <span class="key">2</span>
+                    <span class="side-body">
+                        <span class="side-name">Правый · <span id="duel-cnt-2">0</span></span>
+                        <span class="side-pct" id="duel-pct-2">—</span>
+                    </span>
+                </div>
+            </div>
+            <div class="split empty" id="duel-split"><i class="l"></i><i class="r"></i></div>
+
+            <p id="duel-note">Пишите в чат <b>1</b> или <b>2</b></p>
+        </div>
+
+        <!-- РЕЖИМ "ВЫБОР": экран результата -->
+        <div id="duel-result" style="opacity: 0;">
+            <div class="eyebrow">Чат выбрал</div>
+            <h2 id="duel-winner">—</h2>
+            <p id="duel-meta"></p>
+            <div class="split big" id="duel-res-split">
+                <i class="l"><b id="duel-res-pct-1"></b></i><i class="r"><b id="duel-res-pct-2"></b></i>
+            </div>
+            <div class="duel-lists">
+                <ul id="duel-list-1"></ul>
+                <ul id="duel-list-2"></ul>
+            </div>
+        </div>
+
         <!-- Статус подключения к Ютубу (появляется ненадолго) -->
         <div id="yt-status"></div>
     </div>
